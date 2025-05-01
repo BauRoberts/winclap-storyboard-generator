@@ -1,3 +1,4 @@
+///Users/bautistaroberts/winclap-storyboard-generator/src/app/api/auth/[...nextauth]/route.ts
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import { JWT } from "next-auth/jwt";

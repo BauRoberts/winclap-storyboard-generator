@@ -202,7 +202,13 @@ export const generateStoryboard = async (accessToken: string, data: StoryboardDa
       // Escena 4 (CTA)
       '{{SCENE_4_SCRIPT}}': data.scene4Script || '¡Descargá ahora y simplificá tu vida!',
       '{{SCENE_4_SOUND}}': data.scene4Sound || 'Remate musical con call to action claro',
-      '{{SCENE_4_VISUAL}}': data.scene4Visual || 'Smartphone con la app y botón de descarga visible'
+      '{{SCENE_4_VISUAL}}': data.scene4Visual || 'Smartphone con la app y botón de descarga visible',
+
+      // Nuevos campos del formulario
+      '{{CREADOR}}': data.creador || '',
+      '{{MOM}}': data.mom || '',
+      '{{REFERENCIAS}}': data.referencias || '',
+      '{{PLATAFORMA}}': data.plataforma || '',
     };
     
     // Reemplazar los placeholders

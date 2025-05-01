@@ -1,169 +1,100 @@
-// src/app/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession, signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function Home() {
   const { data: session, status } = useSession();
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
-  const [formData, setFormData] = useState({
-    cliente: '',
-    objetivo: '',
-    target: '',
-    mensaje: ''
-  });
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-      
-      const data = await response.json();
-      
-      setResult(data);
-    } catch (error: any) {
-      setResult({ error: error.message });
-    } finally {
-      setLoading(false);
+  // Redirigir automáticamente si ya hay sesión
+  useEffect(() => {
+    if (session) {
+      router.push('/form');
     }
-  };
+  }, [session, router]);
 
+  // Mostrar loading mientras se verifica la sesión
   if (status === 'loading') {
-    return <p className="text-center p-8">Cargando...</p>;
-  }
-
-  if (!session) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-8">
-        <h1 className="text-4xl font-bold mb-8">Winclap Storyboard Generator</h1>
-        <p className="mb-6">Inicia sesión para generar storyboards</p>
-        <button
-          onClick={() => signIn('google')}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-        >
-          Iniciar sesión con Google
-        </button>
-      </main>
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+      </div>
     );
   }
 
-  return (
-    <main className="min-h-screen p-8 max-w-4xl mx-auto">
-      <h1 className="text-4xl font-bold mb-8 text-center">Winclap Storyboard Generator</h1>
-      
-      <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6 mb-8">
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="cliente">
-            Cliente
-          </label>
-          <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="cliente"
-            name="cliente"
-            type="text"
-            placeholder="Ej: Nike"
-            value={formData.cliente}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="objetivo">
-            Objetivo de la campaña
-          </label>
-          <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="objetivo"
-            name="objetivo"
-            type="text"
-            placeholder="Ej: Aumentar descargas de la app"
-            value={formData.objetivo}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="target">
-            Target
-          </label>
-          <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="target"
-            name="target"
-            type="text"
-            placeholder="Ej: Jóvenes de 18-24 años interesados en fitness"
-            value={formData.target}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="mensaje">
-            Mensaje clave
-          </label>
-          <textarea
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="mensaje"
-            name="mensaje"
-            placeholder="Ej: Nuestra app te ayuda a encontrar las zapatillas perfectas en segundos"
-            value={formData.mensaje}
-            onChange={handleChange}
-            rows={3}
-            required
-          />
-        </div>
-        
-        <div className="flex items-center justify-center">
-          <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline"
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? 'Generando...' : 'Generar Storyboard con IA'}
-          </button>
-        </div>
-      </form>
-      
-      {result && (
-        <div className="bg-gray-100 p-6 rounded-lg">
-          {result.error ? (
-            <p className="text-red-600">Error: {result.error}</p>
-          ) : (
-            <>
-              <p className="text-green-600 text-lg font-semibold mb-4">¡Storyboard generado con éxito!</p>
-              <p className="mb-4">El storyboard ha sido creado basado en tu brief y mejorado con IA.</p>
-              <div className="flex justify-center">
-                <a 
-                  href={result.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline"
-                >
-                  Ver storyboard en Google Slides
-                </a>
+  // Mostrar login si no hay sesión
+  if (!session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Card className="w-[350px] border-gray-200 shadow-sm">
+          <CardHeader className="space-y-2">
+            <div className="flex justify-center mb-4">
+              <span className="text-4xl">🪄</span>
+            </div>
+            <CardTitle className="text-2xl font-semibold text-center">Winclap Storyboard</CardTitle>
+            <CardDescription className="text-center text-gray-500">
+              Plataforma de generación de storyboards
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="pt-4">
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-200" />
               </div>
-            </>
-          )}
-        </div>
-      )}
-    </main>
-  );
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-gray-500">Acceso</span>
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              className="w-full h-12 border-gray-200 bg-white text-black hover:bg-gray-50 flex items-center justify-center gap-2"
+              onClick={async () => {
+                setIsLoading(true);
+                await signIn('google', { callbackUrl: '/form' });
+              }}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Conectando...
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                    <path d="M1 1h22v22H1z" fill="none" />
+                  </svg>
+                  Continuar con Google
+                </>
+              )}
+            </Button>
+          </CardContent>
+
+          <CardFooter className="flex-col space-y-2 text-center text-xs text-gray-500">
+            <p>Herramienta interna para Content Partner Analysts</p>
+            <div className="flex items-center justify-center gap-1">
+              <span className="w-2 h-2 bg-black rounded-full"></span>
+              <span>Winclap Storyboard Generator</span>
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  // Evitar parpadeos: mientras redirige, mantener pantalla limpia
+  return null;
 }
