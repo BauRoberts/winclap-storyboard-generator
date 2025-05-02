@@ -59,7 +59,7 @@ export async function generateStoryboardContent(prompt: string): Promise<Storybo
     // Intentar extraer el JSON
     try {
       return JSON.parse(contentText);
-    } catch (_) { // Cambiado de `e` a `_` para ignorar el error
+    } catch{ // Cambiado de `e` a `_` para ignorar el error
       // Si no se puede parsear directamente, intentar extraer el JSON de la respuesta
       const jsonMatch = contentText.match(/```json\n([\s\S]*?)\n```/) || 
                         contentText.match(/{[\s\S]*}/);

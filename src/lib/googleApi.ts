@@ -37,7 +37,7 @@ interface StoryboardData {
   scene4Script?: string;
   scene4Sound?: string;
   scene4Visual?: string;
-  [key: string]: any;
+  [key: string]: string | undefined;  // Cambia a string | undefined
 }
 
 interface StoryboardResult {

@@ -33,7 +33,7 @@ export default function ResultPage() {
     if (saved) {
       try {
         setStoryboard(JSON.parse(saved));
-      } catch (_) {
+      } catch {
         setError('No se pudo cargar el storyboard generado.');
       }
     } else {
