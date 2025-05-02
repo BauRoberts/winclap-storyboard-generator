@@ -73,7 +73,8 @@ export default function BriefingForm() {
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
     setError(null);
-  
+    console.log('➡️ Enviando formulario con:', values);
+
     try {
       const response = await fetch('/api/generate-content', {
         method: 'POST',
@@ -117,6 +118,12 @@ export default function BriefingForm() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+
+{Object.keys(form.formState.errors).length > 0 && (
+  <pre className="text-red-500 text-sm mb-4 bg-red-50 p-2 rounded-md overflow-x-auto">
+    {JSON.stringify(form.formState.errors, null, 2)}
+  </pre>
+)}
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
