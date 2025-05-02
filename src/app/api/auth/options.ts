@@ -1,5 +1,19 @@
-import GoogleProvider from "next-auth/providers/google";
 import { NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import { JWT } from "next-auth/jwt";
+
+// Extender interfaces para incluir accessToken
+declare module "next-auth" {
+  interface Session {
+    accessToken?: string;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    accessToken?: string;
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [

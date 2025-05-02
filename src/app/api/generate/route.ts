@@ -5,6 +5,7 @@ import { generateStoryboard } from '@/lib/googleApi';
 import { generateStoryboardContent } from '@/lib/anthropicService'; // Cambiado a Anthropic
 import { authOptions } from '@/app/api/auth/options';
 
+
 // Línea 44: Agregar una interfaz para briefData
 interface BriefData {
   cliente: string;
