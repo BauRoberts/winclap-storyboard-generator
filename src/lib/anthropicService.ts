@@ -5,7 +5,31 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
 });
 
-export async function generateStoryboardContent(prompt: string): Promise<any> {
+// Definir la interfaz para el contenido generado
+interface StoryboardContent {
+  objective: string;
+  tone: string;
+  valueProp1: string;
+  valueProp2: string;
+  hook?: string;
+  description?: string;
+  cta?: string;
+  scene1Script?: string;
+  scene1Visual?: string;
+  scene1Sound?: string;
+  scene2Script?: string;
+  scene2Visual?: string;
+  scene2Sound?: string;
+  scene3Script?: string;
+  scene3Visual?: string;
+  scene3Sound?: string;
+  scene4Script?: string;
+  scene4Visual?: string;
+  scene4Sound?: string;
+  [key: string]: string | undefined; // Para campos adicionales
+}
+
+export async function generateStoryboardContent(prompt: string): Promise<StoryboardContent> {
   try {
     const message = await anthropic.messages.create({
       model: "claude-3-opus-20240229",
@@ -35,7 +59,7 @@ export async function generateStoryboardContent(prompt: string): Promise<any> {
     // Intentar extraer el JSON
     try {
       return JSON.parse(contentText);
-    } catch (e) {
+    } catch (_) { // Cambiado de `e` a `_` para ignorar el error
       // Si no se puede parsear directamente, intentar extraer el JSON de la respuesta
       const jsonMatch = contentText.match(/```json\n([\s\S]*?)\n```/) || 
                         contentText.match(/{[\s\S]*}/);
@@ -51,7 +75,21 @@ export async function generateStoryboardContent(prompt: string): Promise<any> {
         tone: "Informativo",
         valueProp1: "Valor por defecto 1",
         valueProp2: "Valor por defecto 2",
-        // ... resto de campos con valores predeterminados
+        hook: "Gancho predeterminado",
+        description: "Descripción predeterminada",
+        cta: "Llamado a la acción predeterminado",
+        scene1Script: "Guión predeterminado para la escena 1",
+        scene1Visual: "Visual predeterminado para la escena 1",
+        scene1Sound: "Sonido predeterminado para la escena 1",
+        scene2Script: "Guión predeterminado para la escena 2",
+        scene2Visual: "Visual predeterminado para la escena 2",
+        scene2Sound: "Sonido predeterminado para la escena 2",
+        scene3Script: "Guión predeterminado para la escena 3",
+        scene3Visual: "Visual predeterminado para la escena 3",
+        scene3Sound: "Sonido predeterminado para la escena 3",
+        scene4Script: "Guión predeterminado para la escena 4",
+        scene4Visual: "Visual predeterminado para la escena 4",
+        scene4Sound: "Sonido predeterminado para la escena 4"
       };
     }
   } catch (error) {

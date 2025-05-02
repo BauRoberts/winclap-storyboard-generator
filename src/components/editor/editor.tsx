@@ -4,11 +4,44 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useEffect } from 'react';
+
+interface AIContent {
+  objective: string;
+  tone: string;
+  valueProp1: string;
+  valueProp2: string;
+  hook: string;
+  description: string;
+  cta: string;
+  scene1Script: string;
+  scene1Visual: string;
+  scene1Sound: string;
+  scene2Script: string;
+  scene2Visual: string;
+  scene2Sound: string;
+  scene3Script: string;
+  scene3Visual: string;
+  scene3Sound: string;
+  scene4Script: string;
+  scene4Visual: string;
+  scene4Sound: string;
+  [key: string]: string; // Para cualquier otra propiedad que pueda tener
+}
+
+interface EditorJSON {
+  type: string;
+  content?: Array<{
+    type: string;
+    content?: Array<{
+      type: string;
+      text: string;
+    }>;
+  }>;
+}
 
 interface RichEditorProps {
-  initialContent: any;
-  onChange: (json: any) => void;
+  initialContent: AIContent;
+  onChange: (json: AIContent) => void;
 }
 
 export default function RichEditor({ initialContent, onChange }: RichEditorProps) {
@@ -26,15 +59,14 @@ export default function RichEditor({ initialContent, onChange }: RichEditorProps
       },
     },
     onUpdate({ editor }) {
-      onChange?.(parseEditorContent(editor.getJSON()));
+      onChange?.(parseEditorContent(editor.getJSON() as EditorJSON));
     },
   });
 
   return <EditorContent editor={editor} />;
 }
 
-// 🧠 Formatea el JSON inicial como texto editable
-function formatAsDoc(data: any) {
+function formatAsDoc(data: AIContent) {
   return {
     type: 'doc',
     content: [
@@ -73,14 +105,13 @@ function toParagraph(text: string) {
   return text ? [{ type: 'paragraph', content: [{ type: 'text', text }] }] : [];
 }
 
-// 🧠 Parsea el texto editable nuevamente como JSON estructurado básico
-function parseEditorContent(doc: any) {
-  const lines = doc.content?.flatMap((block: any) => {
-    return block.content?.map((c: any) => c.text) || [];
-  }).filter(Boolean);
+function parseEditorContent(doc: EditorJSON): AIContent {
+    const lines = doc.content?.flatMap((block) => {
+      return block.content?.map((c) => c.text) || [];
+    }).filter(Boolean) || []; 
 
   const obj: Record<string, string> = {};
-  lines.forEach((line: string) => {
+  lines.forEach((line) => {
     const match = line.match(/^(.+?):\s*(.+)$/);
     if (match) {
       const key = match[1].toLowerCase().replace(/\s+/g, '').replace(/[()]/g, '');

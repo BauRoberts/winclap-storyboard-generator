@@ -15,10 +15,33 @@ const RichEditor = dynamic(() => import('@/components/editor/editor'), { ssr: fa
 export default function ReviewPage() {
   const router = useRouter();
   const { status } = useSession();
-  const [aiContent, setAiContent] = useState<any>(null);
+  interface AIContent {
+    objective: string;
+    tone: string;
+    valueProp1: string;
+    valueProp2: string;
+    hook: string;
+    description: string;
+    cta: string;
+    scene1Script: string;
+    scene1Visual: string;
+    scene1Sound: string;
+    scene2Script: string;
+    scene2Visual: string;
+    scene2Sound: string;
+    scene3Script: string;
+    scene3Visual: string;
+    scene3Sound: string;
+    scene4Script: string;
+    scene4Visual: string;
+    scene4Sound: string;
+    [key: string]: string;
+  }
+  const [aiContent, setAiContent] = useState<AIContent | null>(null);  
   const [cliente, setCliente] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editorJson, setEditorJson] = useState(null);
+  const [editorJson, setEditorJson] = useState<AIContent | null>(null);
+
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,9 +68,10 @@ export default function ReviewPage() {
       if (!response.ok || !result.success) throw new Error(result.error);
       localStorage.setItem('storyboardResult', JSON.stringify(result));
       router.push('/result');
-    } catch (e: any) {
-      setError(e.message || 'Error al generar Slides');
-    } finally {
+    } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : 'Error al generar Slides';
+        setError(errorMsg);
+      } finally {
       setIsSubmitting(false);
     }
   };

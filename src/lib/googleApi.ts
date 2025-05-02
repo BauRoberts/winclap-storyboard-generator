@@ -82,41 +82,41 @@ export const replacePlaceholders = async (accessToken: string, presentationId: s
     
     // Preparar las solicitudes de reemplazo de texto
     const requests = Object.entries(replacements).map(([placeholder, replacement]) => {
-      // Registramos cada sustitución para debugging
       console.log(`Reemplazando: "${placeholder}" con "${replacement.substring(0, 30)}${replacement.length > 30 ? '...' : ''}"`);
-      
       return {
         replaceAllText: {
           containsText: {
             text: placeholder,
             matchCase: true
           },
-          replaceText: replacement || ''  // Aseguramos que nunca sea undefined
+          replaceText: replacement || '' // Aseguramos que nunca sea undefined
         }
       };
     });
-    
-    // Log para ver la estructura completa (sin detalles)
+
     console.log(`Solicitudes totales: ${requests.length}`);
-    
+
     // Ejecutar los reemplazos
     if (requests.length > 0) {
       try {
         const response = await slides.presentations.batchUpdate({
           presentationId,
           requestBody: {
-            requests: requests  // Aseguramos que la propiedad se llama "requests"
+            requests: requests
           }
         });
         console.log('Reemplazo exitoso:', response.status);
-      } catch (updateError: any) {
-        console.error('Error específico en batchUpdate:', updateError.message);
-        
+      } catch (updateError: unknown) { // Cambiado de `any` a `unknown`
+        console.error(
+          'Error específico en batchUpdate:',
+          updateError instanceof Error ? updateError.message : updateError
+        );
+
         // Si hay error con múltiples solicitudes, intentar por lotes más pequeños
         if (requests.length > 10) {
           console.log('Intentando por lotes más pequeños...');
           const batchSize = 5;
-          
+
           for (let i = 0; i < requests.length; i += batchSize) {
             const batch = requests.slice(i, i + batchSize);
             try {
@@ -126,9 +126,12 @@ export const replacePlaceholders = async (accessToken: string, presentationId: s
                   requests: batch
                 }
               });
-              console.log(`Lote ${i/batchSize + 1} procesado correctamente.`);
-            } catch (batchError) {
-              console.error(`Error en lote ${i/batchSize + 1}:`, batchError);
+              console.log(`Lote ${i / batchSize + 1} procesado correctamente.`);
+            } catch (batchError: unknown) { // Cambiado de `any` a `unknown`
+              console.error(
+                `Error en lote ${i / batchSize + 1}:`,
+                batchError instanceof Error ? batchError.message : batchError
+              );
             }
           }
         } else {
@@ -136,10 +139,13 @@ export const replacePlaceholders = async (accessToken: string, presentationId: s
         }
       }
     }
-    
+
     return presentationId;
-  } catch (error) {
-    console.error('Error al reemplazar placeholders:', error);
+  } catch (error: unknown) { // Cambiado de `any` a `unknown`
+    console.error(
+      'Error al reemplazar placeholders:',
+      error instanceof Error ? error.message : error
+    );
     throw error;
   }
 };

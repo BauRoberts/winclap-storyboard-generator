@@ -11,18 +11,29 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function ResultPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [storyboard, setStoryboard] = useState<null | any>(null);
+  interface Storyboard {
+    url?: string;
+    aiContent?: {
+      hook: string;
+      description: string;
+      scene1Script: string;
+      cta: string;
+      // ... otras propiedades según necesites
+    };
+    // otras propiedades que necesites
+  }
+  const [storyboard, setStoryboard] = useState<Storyboard | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('storyboardResult');
     if (saved) {
       try {
         setStoryboard(JSON.parse(saved));
-      } catch (e) {
+      } catch (_) {
         setError('No se pudo cargar el storyboard generado.');
       }
     } else {

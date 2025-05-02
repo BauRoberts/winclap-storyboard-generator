@@ -2,7 +2,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateStoryboardContent } from '@/lib/anthropicService';
 
-function createPrompt(briefData: any): string {
+// Línea 5: Agregar una interfaz para briefData
+interface BriefData {
+  cliente: string;
+  objetivo: string;
+  target: string;
+  mensaje: string;
+  plataforma: string;
+  mom: string;
+  creador: string;
+  referencias?: string;
+}
+
+// Reemplazar: function createPrompt(briefData: any): string
+// Con:
+function createPrompt(briefData: BriefData): string {
   return `
 Necesito que actúes como un experto en marketing digital especializado en la creación de contenido para TikTok.
 
@@ -59,8 +73,9 @@ export async function POST(request: NextRequest) {
     const aiContent = await generateStoryboardContent(prompt);
 
     return NextResponse.json({ success: true, aiContent });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error al generar contenido IA:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }

@@ -5,6 +5,18 @@ import { generateStoryboard } from '@/lib/googleApi';
 import { generateStoryboardContent } from '@/lib/anthropicService'; // Cambiado a Anthropic
 import { authOptions } from '@/app/api/auth/options';
 
+// Línea 44: Agregar una interfaz para briefData
+interface BriefData {
+  cliente: string;
+  objetivo: string;
+  target: string;
+  mensaje: string;
+  plataforma: string;
+  mom: string;
+  creador: string;
+  referencias?: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Obtener la sesión del usuario
@@ -41,15 +53,19 @@ export async function POST(request: NextRequest) {
       aiContent: storyboardContent // Opcional: devolver el contenido generado
     });
     
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error en API:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: errorMessage },
       { status: 500 }
     );
   }
 }
-function createPrompt(briefData: any): string {
+
+// Reemplazar: function createPrompt(briefData: any): string
+// Con:
+function createPrompt(briefData: BriefData): string {
   return `
     Necesito que actúes como un experto en marketing digital especializado en la creación de contenido para TikTok. 
     

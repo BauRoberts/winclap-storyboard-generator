@@ -35,7 +35,8 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function BriefingForm() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('cliente');
   const [error, setError] = useState<string | null>(null);
@@ -91,9 +92,10 @@ export default function BriefingForm() {
       localStorage.setItem('aiContent', JSON.stringify(result.aiContent));
       localStorage.setItem('briefData', JSON.stringify(values));
       router.push('/review');
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error inesperado';
       console.error('Error:', error);
-      setError(error.message || 'Error inesperado');
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
