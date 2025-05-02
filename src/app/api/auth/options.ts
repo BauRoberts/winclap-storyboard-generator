@@ -1,6 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { JWT } from "next-auth/jwt";
+
 
 // Extender interfaces para incluir accessToken
 declare module "next-auth" {
