@@ -1,10 +1,22 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// @ts-nocheck
 import { Extension } from '@tiptap/core';
-import Suggestion from '@tiptap/suggestion';
+import Suggestion, { type SuggestionOptions } from '@tiptap/suggestion';
 import { ReactRenderer } from '@tiptap/react';
-import tippy from 'tippy.js';
+import tippy, { type Instance as TippyInstance } from 'tippy.js';
 import CommandsList from './CommandsList';
+import type { Editor, Range } from '@tiptap/core';
+
+interface CommandProps {
+  editor: Editor;
+  range: Range;
+}
+
+interface SuggestionProps extends CommandProps {
+  query: string;
+  clientRect?: (() => DOMRect) | null;
+  refs?: {
+    onKeyDown?: (props: any) => boolean;
+  };
+}
 
 const Command = Extension.create({
   name: 'slash-command',
@@ -12,7 +24,7 @@ const Command = Extension.create({
     return {
       suggestion: {
         char: '/',
-        command: ({ editor, range, props }: { editor: any; range: any; props: any }) => {
+        command: ({ editor, range, props }: { editor: Editor; range: Range; props: any }) => {
           props.command({ editor, range });
         },
       },
@@ -34,7 +46,7 @@ export const items = [
     description: 'Título principal',
     searchTerms: ['h1', 'titulo'],
     icon: '📝',
-    command: ({ editor, range }) => {
+    command: ({ editor, range }: CommandProps) => {
       editor
         .chain()
         .focus()
@@ -48,7 +60,7 @@ export const items = [
     description: 'Subtítulo',
     searchTerms: ['h2', 'subtitulo'],
     icon: '📋',
-    command: ({ editor, range }) => {
+    command: ({ editor, range }: CommandProps) => {
       editor
         .chain()
         .focus()
@@ -62,7 +74,7 @@ export const items = [
     description: 'Encabezado menor',
     searchTerms: ['h3', 'encabezado'],
     icon: '📌',
-    command: ({ editor, range }) => {
+    command: ({ editor, range }: CommandProps) => {
       editor
         .chain()
         .focus()
@@ -76,7 +88,7 @@ export const items = [
     description: 'Lista con viñetas',
     searchTerms: ['lista', 'bullet', 'viñetas'],
     icon: '•',
-    command: ({ editor, range }) => {
+    command: ({ editor, range }: CommandProps) => {
       editor
         .chain()
         .focus()
@@ -90,7 +102,7 @@ export const items = [
     description: 'Lista numerada',
     searchTerms: ['lista', 'numbered', 'numerada'],
     icon: '1.',
-    command: ({ editor, range }) => {
+    command: ({ editor, range }: CommandProps) => {
       editor
         .chain()
         .focus()
@@ -104,7 +116,7 @@ export const items = [
     description: 'Cita',
     searchTerms: ['quote', 'cita', 'bloque'],
     icon: '"',
-    command: ({ editor, range }) => {
+    command: ({ editor, range }: CommandProps) => {
       editor
         .chain()
         .focus()
@@ -118,7 +130,7 @@ export const items = [
     description: 'Bloque de código',
     searchTerms: ['code', 'codigo', 'bloque'],
     icon: '</>',
-    command: ({ editor, range }) => {
+    command: ({ editor, range }: CommandProps) => {
       editor
         .chain()
         .focus()
@@ -132,7 +144,7 @@ export const items = [
     description: 'Línea divisoria',
     searchTerms: ['divider', 'separador', 'linea'],
     icon: '─',
-    command: ({ editor, range }) => {
+    command: ({ editor, range }: CommandProps) => {
       editor
         .chain()
         .focus()
@@ -146,7 +158,7 @@ export const items = [
     description: 'Plantilla para Cliente',
     searchTerms: ['cliente', 'template'],
     icon: '👤',
-    command: ({ editor, range }) => {
+    command: ({ editor, range }: CommandProps) => {
       editor
         .chain()
         .focus()
@@ -160,7 +172,7 @@ export const items = [
     description: 'Plantilla para Objetivo',
     searchTerms: ['objetivo', 'goal', 'template'],
     icon: '🎯',
-    command: ({ editor, range }) => {
+    command: ({ editor, range }: CommandProps) => {
       editor
         .chain()
         .focus()
@@ -174,7 +186,7 @@ export const items = [
     description: 'Plantilla para Target',
     searchTerms: ['target', 'audiencia', 'template'],
     icon: '👥',
-    command: ({ editor, range }) => {
+    command: ({ editor, range }: CommandProps) => {
       editor
         .chain()
         .focus()
@@ -188,7 +200,7 @@ export const items = [
     description: 'Plantilla para Hook',
     searchTerms: ['hook', 'gancho', 'template'],
     icon: '🪝',
-    command: ({ editor, range }) => {
+    command: ({ editor, range }: CommandProps) => {
       editor
         .chain()
         .focus()
@@ -201,7 +213,7 @@ export const items = [
 
 export const Commands = Command.configure({
   suggestion: {
-    items: ({ query }) => {
+    items: ({ query }: { query: string }) => {
       return items.filter(item => 
         item.title.toLowerCase().includes(query.toLowerCase()) ||
         item.description.toLowerCase().includes(query.toLowerCase()) ||
@@ -209,11 +221,11 @@ export const Commands = Command.configure({
       );
     },
     render: () => {
-      let component;
-      let popup;
+      let component: ReactRenderer<any> | null = null;
+      let popup: TippyInstance[] | null = null;
 
       return {
-        onStart: (props) => {
+        onStart: (props: SuggestionProps) => {
           component = new ReactRenderer(CommandsList, {
             props,
             editor: props.editor,
@@ -234,30 +246,39 @@ export const Commands = Command.configure({
           });
         },
 
-        onUpdate(props) {
+        onUpdate(props: SuggestionProps) {
+          if (!component) return;
           component.updateProps(props);
 
           if (!props.clientRect) {
             return;
           }
 
-          popup[0].setProps({
-            getReferenceClientRect: props.clientRect,
-          });
+          if (popup && popup[0]) {
+            popup[0].setProps({
+              getReferenceClientRect: props.clientRect,
+            });
+          }
         },
 
-        onKeyDown(props) {
+        onKeyDown(props: { event: KeyboardEvent }) {
           if (props.event.key === 'Escape') {
-            popup[0].hide();
+            if (popup && popup[0]) {
+              popup[0].hide();
+            }
             return true;
           }
 
-          return component.ref?.onKeyDown(props);
+          return component?.ref?.onKeyDown(props) ?? false;
         },
 
         onExit() {
-          popup[0].destroy();
-          component.destroy();
+          if (popup && popup[0]) {
+            popup[0].destroy();
+          }
+          if (component) {
+            component.destroy();
+          }
         },
       };
     },
