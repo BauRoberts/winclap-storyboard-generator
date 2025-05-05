@@ -16,12 +16,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { 
-  Plus, 
   Search, 
   MoreHorizontal, 
   ArrowUpDown,
@@ -93,7 +91,7 @@ const mockStoryboards: Storyboard[] = [
 
 export default function StoryboardsPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [storyboards, setStoryboards] = useState<Storyboard[]>(mockStoryboards);
+  const [storyboards, _setStoryboards] = useState<Storyboard[]>(mockStoryboards);
   const [sortConfig, setSortConfig] = useState<{key: string, direction: 'asc' | 'desc'} | null>(null);
 
   // Filtrar storyboards según el término de búsqueda

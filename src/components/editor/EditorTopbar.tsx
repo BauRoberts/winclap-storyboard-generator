@@ -83,7 +83,7 @@ export default function EditorTopbar({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isEditing, titleValue]);
+  }, [isEditing, titleValue, handleTitleBlur]);
 
   // Funciones para seleccionar cliente
   const handleClientSelect = (id: string) => {
@@ -92,7 +92,7 @@ export default function EditorTopbar({
   };
 
   // Simular selección de fase
-  const handlePhaseSelect = (phase: string) => {
+  const handlePhaseSelect = (_phase: string) => {
     setPhaseOpen(false);
     // Aquí irías la lógica para cambiar la fase
   };

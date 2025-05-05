@@ -5,13 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { 
-  LayoutDashboard, 
   RefreshCw, 
-  BarChart3, 
-  FolderPlus, 
-  Users, 
-  Library, 
-  FileText,
   MessageSquareQuote,
   Settings,
   HelpCircle,
