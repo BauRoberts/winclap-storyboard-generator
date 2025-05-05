@@ -90,7 +90,7 @@ const mockClients: Client[] = [
 
 export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [clients, setClients] = useState<Client[]>(mockClients);
+  const [clients, _setClients] = useState<Client[]>(mockClients);
   const [sortConfig, setSortConfig] = useState<{key: string, direction: 'asc' | 'desc'} | null>(null);
 
   // Filtrar clientes según el término de búsqueda

@@ -1,7 +1,7 @@
 // src/components/editor/EditorTopbar.tsx
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { ChevronDown, Clock, Share2, MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,
@@ -55,13 +55,13 @@ export default function EditorTopbar({
     setTitleValue(e.target.value);
   };
 
-  const handleTitleBlur = () => {
+  const handleTitleBlur = useCallback(() => {
     if (titleValue.trim() === '') {
       setTitleValue('Sin título');
     }
     setIsEditing(false);
     onTitleChange(titleValue);
-  };
+  }, [titleValue, onTitleChange]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
