@@ -1,18 +1,13 @@
 import { Extension } from '@tiptap/core';
 import Suggestion from '@tiptap/suggestion';
 import { ReactRenderer } from '@tiptap/react';
-import tippy, { Instance as TippyInstance } from 'tippy.js';
+import tippy from 'tippy.js';
 import CommandsList from './CommandsList';
 import type { Editor, Range } from '@tiptap/core';
 
 interface CommandProps {
   editor: Editor;
   range: Range;
-}
-
-interface SuggestionProps extends CommandProps {
-  query: string;
-  clientRect?: () => DOMRect | null;
 }
 
 const Command = Extension.create({
