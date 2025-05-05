@@ -155,8 +155,6 @@ function parseEditorContent(doc: EditorJSON): AIContent {
     const lines = text.split('\n');
     lines.forEach(line => {
       const scriptMatch = line.match(/Script:\s*(.+)/i);
-      const visualMatch = line.match(/Visual:\s*(.+)/i);
-      const soundMatch = line.match(/Sonido:\s*(.+)/i);
       const objectiveMatch = line.match(/OBJETIVO:\s*(.+)/i);
       const toneMatch = line.match(/TONO:\s*(.+)/i);
       const prop1Match = line.match(/PROPUESTA DE VALOR 1:\s*(.+)/i);
