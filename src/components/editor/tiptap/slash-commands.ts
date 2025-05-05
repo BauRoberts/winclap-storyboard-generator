@@ -1,7 +1,7 @@
 import { Extension } from '@tiptap/core';
 import Suggestion from '@tiptap/suggestion';
 import { ReactRenderer } from '@tiptap/react';
-import tippy, { type Instance as TippyInstance } from 'tippy.js';
+import tippy, { Instance as TippyInstance } from 'tippy.js';
 import CommandsList from './CommandsList';
 import type { Editor, Range } from '@tiptap/core';
 
@@ -12,16 +12,7 @@ interface CommandProps {
 
 interface SuggestionProps extends CommandProps {
   query: string;
-  clientRect?: (() => DOMRect) | null;
-  refs?: {
-    onKeyDown?: (props: { event: KeyboardEvent }) => boolean;
-  };
-}
-
-interface CommandObject {
-  command: (props: CommandProps) => void;
-  editor: Editor;
-  range: Range;
+  clientRect?: () => DOMRect | null;
 }
 
 const Command = Extension.create({
@@ -30,7 +21,7 @@ const Command = Extension.create({
     return {
       suggestion: {
         char: '/',
-        command: ({ editor, range, props }: CommandObject & { props: CommandObject }) => {
+        command: ({ editor, range, props }: any) => {
           props.command({ editor, range });
         },
       },
@@ -227,11 +218,11 @@ export const Commands = Command.configure({
       );
     },
     render: () => {
-      let component: ReactRenderer<any> | null = null;
-      let popup: TippyInstance[] | null = null;
+      let component: any = null;
+      let popup: any = null;
 
       return {
-        onStart: (props: SuggestionProps) => {
+        onStart: (props: any) => {
           component = new ReactRenderer(CommandsList, {
             props,
             editor: props.editor,
@@ -252,39 +243,32 @@ export const Commands = Command.configure({
           });
         },
 
-        onUpdate(props: SuggestionProps) {
-          if (!component) return;
-          component.updateProps(props);
+        onUpdate(props: any) {
+          if (component) {
+            component.updateProps(props);
+          }
 
           if (!props.clientRect) {
             return;
           }
 
-          if (popup && popup[0]) {
-            popup[0].setProps({
-              getReferenceClientRect: props.clientRect,
-            });
-          }
+          popup[0].setProps({
+            getReferenceClientRect: props.clientRect,
+          });
         },
 
-        onKeyDown(props: { event: KeyboardEvent }) {
+        onKeyDown(props: any) {
           if (props.event.key === 'Escape') {
-            if (popup && popup[0]) {
-              popup[0].hide();
-            }
+            popup[0].hide();
             return true;
           }
 
-          return component?.ref?.onKeyDown(props) ?? false;
+          return component.ref?.onKeyDown(props);
         },
 
         onExit() {
-          if (popup && popup[0]) {
-            popup[0].destroy();
-          }
-          if (component) {
-            component.destroy();
-          }
+          popup[0].destroy();
+          component.destroy();
         },
       };
     },
