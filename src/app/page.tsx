@@ -16,7 +16,7 @@ export default function Home() {
   // Redirigir automáticamente si ya hay sesión
   useEffect(() => {
     if (session) {
-      router.push('/form');
+      router.push('/editor');
     }
   }, [session, router]);
 

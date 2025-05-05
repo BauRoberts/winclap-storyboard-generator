@@ -1,4 +1,3 @@
-///Users/bautistaroberts/winclap-storyboard-generator/src/app/(dashboard)/result/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -123,7 +122,7 @@ export default function ResultPage() {
           <CardFooter className="flex flex-col gap-3 sm:flex-row sm:justify-between">
             <Button
               variant="outline"
-              onClick={() => router.push('/form')}
+              onClick={() => router.push('/editor')}
               className="w-full sm:w-auto border-gray-200"
             >
               <ArrowLeft className="mr-2 h-4 w-4" /> Volver a Crear

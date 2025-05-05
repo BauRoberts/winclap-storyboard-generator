@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import { Wand2, User, LogOut } from 'lucide-react';
 
-
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -34,9 +33,9 @@ export default function Navbar() {
         
         <nav className="flex items-center">
           <Link 
-            href="/form" 
+            href="/editor" 
             className={`px-3 py-2 mx-1 rounded-md text-sm ${
-              pathname === '/form' 
+              pathname === '/editor' 
                 ? 'bg-black text-white' 
                 : 'text-gray-700 hover:bg-gray-100'
             }`}

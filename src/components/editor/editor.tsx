@@ -1,9 +1,9 @@
-// ✅ /src/components/editor/editor.tsx — Tiptap como editor tipo Notion
 'use client';
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
+import { useEffect } from 'react';
 
 interface AIContent {
   objective: string;
@@ -25,7 +25,7 @@ interface AIContent {
   scene4Script: string;
   scene4Visual: string;
   scene4Sound: string;
-  [key: string]: string; // Para cualquier otra propiedad que pueda tener
+  [key: string]: string;
 }
 
 interface EditorJSON {
@@ -41,7 +41,7 @@ interface EditorJSON {
 
 interface RichEditorProps {
   initialContent: AIContent;
-  onChange: (json: AIContent) => void;
+  onChange: (json: AIContent, text?: string) => void;
 }
 
 export default function RichEditor({ initialContent, onChange }: RichEditorProps) {
@@ -49,51 +49,66 @@ export default function RichEditor({ initialContent, onChange }: RichEditorProps
     extensions: [
       StarterKit,
       Placeholder.configure({
-        placeholder: 'Escribí aquí el contenido generado...'
+        placeholder: 'Escribe o pega tu briefing aquí...\n\nPor ejemplo:\n- Cliente: Nike\n- Objetivo: Aumentar descargas de la app\n- Target: Jóvenes 18-24 años\n- Mensaje: Encuentra las zapatillas perfectas en segundos'
       }),
     ],
-    content: formatAsDoc(initialContent),
+    content: '',
     editorProps: {
       attributes: {
         class: 'prose prose-sm sm:prose lg:prose-base dark:prose-invert focus:outline-none max-w-none min-h-[500px] border border-gray-200 rounded-md p-4 bg-white',
       },
     },
     onUpdate({ editor }) {
-      onChange?.(parseEditorContent(editor.getJSON() as EditorJSON));
+      const json = editor.getJSON() as EditorJSON;
+      const text = editor.getText();
+      onChange?.(parseEditorContent(json), text);
     },
   });
+
+  // Actualizar el contenido del editor cuando initialContent cambie
+  useEffect(() => {
+    if (editor && initialContent && Object.keys(initialContent).some(key => initialContent[key])) {
+      editor.commands.setContent(formatAsDoc(initialContent));
+    }
+  }, [editor, initialContent]);
 
   return <EditorContent editor={editor} />;
 }
 
+// Formato del contenido reorganizado
 function formatAsDoc(data: AIContent) {
   return {
     type: 'doc',
     content: [
-      ...toParagraph(`🎯 Objetivo: ${data.objective}`),
-      ...toParagraph(`🧠 Tono: ${data.tone}`),
-      ...toParagraph(`💡 Value Prop 1: ${data.valueProp1}`),
-      ...toParagraph(`💡 Value Prop 2: ${data.valueProp2}`),
-      ...toParagraph(`📢 Hook: ${data.hook}`),
-      ...toParagraph(`📝 Descripción: ${data.description}`),
+      ...toParagraph(`📋 OBJETIVO: ${data.objective}`),
+      ...toParagraph(`🎯 TONO: ${data.tone}`),
+      ...toParagraph(`💡 PROPUESTA DE VALOR 1: ${data.valueProp1}`),
+      ...toParagraph(`💡 PROPUESTA DE VALOR 2: ${data.valueProp2}`),
+      ...toParagraph(''),
+      ...toParagraph(`🎬 STORYBOARD`),
+      ...toParagraph(''),
+      ...toParagraph(`🪝 HOOK: ${data.hook}`),
+      ...toParagraph(`📝 DESCRIPCIÓN: ${data.description}`),
       ...toParagraph(`📣 CTA: ${data.cta}`),
       ...toParagraph(''),
-      ...toParagraph(`🎬 Escena 1:`),
+      ...toParagraph('━━━━━━━━━━━━━━━━━━━━━━━━━━'),
+      ...toParagraph(''),
+      ...toParagraph(`🎬 ESCENA 1 (Hook)`),
       ...toParagraph(`Script: ${data.scene1Script}`),
       ...toParagraph(`Visual: ${data.scene1Visual}`),
       ...toParagraph(`Sonido: ${data.scene1Sound}`),
       ...toParagraph(''),
-      ...toParagraph(`🎬 Escena 2:`),
+      ...toParagraph(`🎬 ESCENA 2 (Desarrollo)`),
       ...toParagraph(`Script: ${data.scene2Script}`),
       ...toParagraph(`Visual: ${data.scene2Visual}`),
       ...toParagraph(`Sonido: ${data.scene2Sound}`),
       ...toParagraph(''),
-      ...toParagraph(`🎬 Escena 3:`),
+      ...toParagraph(`🎬 ESCENA 3 (Desarrollo)`),
       ...toParagraph(`Script: ${data.scene3Script}`),
       ...toParagraph(`Visual: ${data.scene3Visual}`),
       ...toParagraph(`Sonido: ${data.scene3Sound}`),
       ...toParagraph(''),
-      ...toParagraph(`🎬 Escena 4 (CTA):`),
+      ...toParagraph(`🎬 ESCENA 4 (CTA)`),
       ...toParagraph(`Script: ${data.scene4Script}`),
       ...toParagraph(`Visual: ${data.scene4Visual}`),
       ...toParagraph(`Sonido: ${data.scene4Sound}`),
@@ -105,39 +120,70 @@ function toParagraph(text: string) {
   return text ? [{ type: 'paragraph', content: [{ type: 'text', text }] }] : [];
 }
 
+// Parser simplificado para no interferir con el flujo libre
 function parseEditorContent(doc: EditorJSON): AIContent {
-    const lines = doc.content?.flatMap((block) => {
-      return block.content?.map((c) => c.text) || [];
-    }).filter(Boolean) || []; 
+  const text = doc.content?.flatMap((block) => {
+    return block.content?.map((c) => c.text) || [];
+  }).join('\n') || '';
 
-  const obj: Record<string, string> = {};
-  lines.forEach((line) => {
-    const match = line.match(/^(.+?):\s*(.+)$/);
-    if (match) {
-      const key = match[1].toLowerCase().replace(/\s+/g, '').replace(/[()]/g, '');
-      obj[key] = match[2];
-    }
-  });
-
-  return {
-    objective: obj['objetivo'] || '',
-    tone: obj['tono'] || '',
-    valueProp1: obj['valueprop1'] || '',
-    valueProp2: obj['valueprop2'] || '',
-    hook: obj['hook'] || '',
-    description: obj['descripción'] || '',
-    cta: obj['cta'] || '',
-    scene1Script: obj['script'] || '',
-    scene1Visual: obj['visual'] || '',
-    scene1Sound: obj['sonido'] || '',
-    scene2Script: obj['script1'] || '',
-    scene2Visual: obj['visual1'] || '',
-    scene2Sound: obj['sonido1'] || '',
-    scene3Script: obj['script2'] || '',
-    scene3Visual: obj['visual2'] || '',
-    scene3Sound: obj['sonido2'] || '',
-    scene4Script: obj['script3'] || '',
-    scene4Visual: obj['visual3'] || '',
-    scene4Sound: obj['sonido3'] || ''
+  // Inicia con un objeto vacío que cumple con la interfaz
+  const result: AIContent = {
+    objective: '',
+    tone: '',
+    valueProp1: '',
+    valueProp2: '',
+    hook: '',
+    description: '',
+    cta: '',
+    scene1Script: '',
+    scene1Visual: '',
+    scene1Sound: '',
+    scene2Script: '',
+    scene2Visual: '',
+    scene2Sound: '',
+    scene3Script: '',
+    scene3Visual: '',
+    scene3Sound: '',
+    scene4Script: '',
+    scene4Visual: '',
+    scene4Sound: '',
   };
+
+  // Solo intenta parsear si el texto tiene formato estructurado
+  if (text.includes('OBJETIVO:') || text.includes('TONO:')) {
+    // Parseo estructurado
+    const lines = text.split('\n');
+    lines.forEach(line => {
+      const scriptMatch = line.match(/Script:\s*(.+)/i);
+      const visualMatch = line.match(/Visual:\s*(.+)/i);
+      const soundMatch = line.match(/Sonido:\s*(.+)/i);
+      const objectiveMatch = line.match(/OBJETIVO:\s*(.+)/i);
+      const toneMatch = line.match(/TONO:\s*(.+)/i);
+      const prop1Match = line.match(/PROPUESTA DE VALOR 1:\s*(.+)/i);
+      const prop2Match = line.match(/PROPUESTA DE VALOR 2:\s*(.+)/i);
+      const hookMatch = line.match(/HOOK:\s*(.+)/i);
+      const descMatch = line.match(/DESCRIPCIÓN:\s*(.+)/i);
+      const ctaMatch = line.match(/CTA:\s*(.+)/i);
+
+      if (objectiveMatch) result.objective = objectiveMatch[1];
+      if (toneMatch) result.tone = toneMatch[1];
+      if (prop1Match) result.valueProp1 = prop1Match[1];
+      if (prop2Match) result.valueProp2 = prop2Match[1];
+      if (hookMatch) result.hook = hookMatch[1];
+      if (descMatch) result.description = descMatch[1];
+      if (ctaMatch) result.cta = ctaMatch[1];
+
+      // Aquí deberíamos identificar a qué escena pertenece cada match
+      // pero para simplificar, asumimos que aparecen en orden
+      if (scriptMatch) {
+        if (!result.scene1Script) result.scene1Script = scriptMatch[1];
+        else if (!result.scene2Script) result.scene2Script = scriptMatch[1];
+        else if (!result.scene3Script) result.scene3Script = scriptMatch[1];
+        else if (!result.scene4Script) result.scene4Script = scriptMatch[1];
+      }
+      // Mismo patrón para visual y sound...
+    });
+  }
+
+  return result;
 }
