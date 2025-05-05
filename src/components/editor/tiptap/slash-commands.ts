@@ -1,5 +1,5 @@
 import { Extension } from '@tiptap/core';
-import Suggestion, { type SuggestionOptions } from '@tiptap/suggestion';
+import Suggestion from '@tiptap/suggestion';
 import { ReactRenderer } from '@tiptap/react';
 import tippy, { type Instance as TippyInstance } from 'tippy.js';
 import CommandsList from './CommandsList';
@@ -14,8 +14,14 @@ interface SuggestionProps extends CommandProps {
   query: string;
   clientRect?: (() => DOMRect) | null;
   refs?: {
-    onKeyDown?: (props: any) => boolean;
+    onKeyDown?: (props: { event: KeyboardEvent }) => boolean;
   };
+}
+
+interface CommandObject {
+  command: (props: CommandProps) => void;
+  editor: Editor;
+  range: Range;
 }
 
 const Command = Extension.create({
@@ -24,7 +30,7 @@ const Command = Extension.create({
     return {
       suggestion: {
         char: '/',
-        command: ({ editor, range, props }: { editor: Editor; range: Range; props: any }) => {
+        command: ({ editor, range, props }: CommandObject & { props: CommandObject }) => {
           props.command({ editor, range });
         },
       },
