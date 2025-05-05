@@ -150,7 +150,7 @@ export default function EditorPage() {
               <TooltipContent className="max-w-xs">
                 <p className="text-sm">Tips rápidos:</p>
                 <ul className="list-disc ml-4 text-sm space-y-1">
-                  <li>Escribiste "/" para comandos</li>
+                  <li>Escribiste &quot;/&quot; para comandos</li> {/* Escapamos las comillas */}
                   <li>Incluí cliente, objetivo, target</li>
                   <li>Editá antes de generar</li>
                 </ul>

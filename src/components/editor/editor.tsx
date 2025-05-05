@@ -36,17 +36,18 @@ interface AIContent {
 }
 
 interface EditorJSON {
-  type: string;
-  content?: Array<{
     type: string;
-    attrs?: Record<string, any>;
     content?: Array<{
       type: string;
-      text?: string;
-      attrs?: Record<string, any>;
+      attrs?: Record<string, unknown>;
+      content?: Array<{
+        type: string;
+        text?: string;
+        attrs?: Record<string, unknown>;
+      }>;
     }>;
-  }>;
-}
+  }
+  
 
 interface RichEditorProps {
   initialContent: AIContent;
@@ -54,14 +55,14 @@ interface RichEditorProps {
 }
 
 interface DocContent {
-  type: string;
-  attrs?: Record<string, any>;
-  content?: Array<{
     type: string;
-    text?: string;
-    attrs?: Record<string, any>;
-  }>;
-}
+    attrs?: Record<string, unknown>;
+    content?: Array<{
+      type: string;
+      text?: string;
+      attrs?: Record<string, unknown>;
+    }>;
+  }
 
 interface DocStructure {
   type: string;
@@ -126,7 +127,7 @@ export default function RichEditor({ initialContent, onChange }: RichEditorProps
       const doc = formatAsDoc(initialContent);
       editor.commands.setContent(doc);
     }
-  }, [editor]);
+  }, [editor, initialContent]); // Agregar initialContent a las dependencias
 
   return (
     <div className="relative w-full">
