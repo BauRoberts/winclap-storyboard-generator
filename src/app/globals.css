@@ -23,6 +23,18 @@
   --border: oklch(0.92 0 0);
   --input: oklch(0.92 0 0);
   --ring: oklch(0.70 0 0);
+  
+  /* Variables de colores para imitar exactamente a Notion */
+  --notion-text-default: rgb(55, 53, 47);
+  --notion-text-gray: rgb(120, 119, 116);
+  --notion-text-light: rgba(55, 53, 47, 0.6);
+  --notion-bg-default: white;
+  --notion-bg-hover: rgba(55, 53, 47, 0.03);
+  --notion-bg-active: rgba(55, 53, 47, 0.05);
+  --notion-border-focus: rgba(46, 170, 220, 0.4);
+  --notion-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, 
+                  rgba(15, 15, 15, 0.1) 0px 3px 6px, 
+                  rgba(15, 15, 15, 0.2) 0px 9px 24px;
 }
 
 .dark {
@@ -44,9 +56,20 @@
   --border: oklch(0.3 0 0);
   --input: oklch(0.3 0 0);
   --ring: oklch(0.55 0 0);
+  
+  /* Variables de Notion para modo oscuro */
+  --notion-text-default: rgb(255, 255, 255);
+  --notion-text-gray: rgb(155, 155, 155);
+  --notion-text-light: rgba(255, 255, 255, 0.5);
+  --notion-bg-default: rgb(25, 25, 25);
+  --notion-bg-hover: rgba(255, 255, 255, 0.05);
+  --notion-bg-active: rgba(255, 255, 255, 0.08);
+  --notion-shadow: rgba(15, 15, 15, 0.1) 0px 0px 0px 1px, 
+                  rgba(15, 15, 15, 0.2) 0px 3px 6px, 
+                  rgba(15, 15, 15, 0.4) 0px 9px 24px;
 }
 
-/* Estilos personalizados */
+/* Estilos personalizados generales */
 .winclap-logo {
   font-weight: 700;
   letter-spacing: -0.025em;
@@ -83,109 +106,44 @@
   background-color: #f5f5f5;
 }
 
-/* Estilos para el editor Notion-like */
-.notion-like {
-  color: rgb(55, 53, 47);
-  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+/* Sidebar styles */
+.sidebar-link-active {
+  @apply bg-gray-100 text-gray-900;
 }
 
+.sidebar-link-inactive {
+  @apply text-gray-700 hover:bg-gray-50 hover:text-gray-900;
+}
 
+/* Asegurar que la barra de acciones tenga el margen correcto */
+.action-bar {
+  left: 16rem; /* 256px */
+  right: 0;
+}
 
-.ProseMirror {
-  > * + * {
-    margin-top: 0.75em;
+/* Responsive adjustments for sidebar */
+@media (max-width: 1024px) {
+  .sidebar {
+    display: none;
   }
-
-  h1 {
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
-    font-size: 1.875em;
-    line-height: 1.1;
-    font-weight: 700;
-  }
-
-  h2 {
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
-    font-size: 1.5em;
-    line-height: 1.2;
-    font-weight: 600;
-  }
-
-  h3 {
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
-    font-size: 1.25em;
-    line-height: 1.3;
-    font-weight: 600;
-  }
-
-  p {
-    line-height: 1.5;
-    letter-spacing: -0.003em;
-  }
-
-  ul, ol {
-    padding-left: 1.5em;
-  }
-
-  ul li {
-    list-style-type: disc;
-  }
-
-  ol li {
-    list-style-type: decimal;
-  }
-
-  blockquote {
-    border-left: 3px solid #e5e7eb;
-    padding-left: 1rem;
-    font-style: italic;
-    color: #6b7280;
-  }
-
-  code {
-    background-color: rgba(135, 131, 120, 0.15);
-    border-radius: 3px;
-    padding: 0.2em 0.4em;
-    font-size: 85%;
-  }
-
-  pre {
-    background-color: #f6f6f4;
-    border-radius: 3px;
-    padding: 0.5em 1em;
-    
-    code {
-      background-color: transparent;
-      padding: 0;
-    }
-  }
-
-  hr {
-    border: none;
-    border-top: 1px solid #e5e7eb;
-    margin: 2rem 0;
-  }
-
-  /* Placeholder styles */
-  .ProseMirror p.is-editor-empty:first-child::before {
-    content: attr(data-placeholder);
-    float: left;
-    color: #adb5bd;
-    pointer-events: none;
-    height: 0;
+  
+  .action-bar {
+    left: 0;
   }
 }
 
-/* Estilos para el slash command */
-.tippy-box {
-  background-color: white;
+/* User profile avatar */
+.user-avatar {
+  @apply h-6 w-6 rounded-full bg-black text-white flex items-center justify-center text-sm;
 }
 
-/* Animaciones suaves */
-.has-focus {
-  transition: box-shadow 0.2s ease;
+/* Collapsible chevron transition */
+.collapsible-chevron {
+  @apply transition-transform duration-200;
+}
+
+.collapsible-open .collapsible-chevron {
+  @apply rotate-90;
 }
 
 /* Scroll personalizado */
@@ -206,106 +164,325 @@
   background-color: rgba(155, 155, 155, 0.7);
 }
 
-/* Spacing más Notion-like */
-.ProseMirror > p {
+/* ==============================
+   ESTILOS PARA EL EDITOR NOTION
+   ============================== */
+
+/* Estilo para el contenedor principal del editor */
+.notion-like-editor {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+/* Estilos para el ProseMirror */
+.notion-like-editor .ProseMirror {
+  min-height: calc(100vh - 200px);
+  padding: 0 6px;
+  color: var(--notion-text-default);
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  overflow-y: auto;
+}
+
+/* Eliminar bordes y decoraciones para el focus */
+.notion-like-editor .ProseMirror:focus {
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+
+/* Estilos de tipografía */
+.notion-like-editor .ProseMirror h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-top: 1.4em;
+  margin-bottom: 0.4em;
+  color: var(--notion-text-default);
+  line-height: 1.3;
+}
+
+.notion-like-editor .ProseMirror h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 1.3em;
+  margin-bottom: 0.3em;
+  color: var(--notion-text-default);
+  line-height: 1.3;
+}
+
+.notion-like-editor .ProseMirror h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.2em;
+  margin-bottom: 0.2em;
+  color: var(--notion-text-default);
+  line-height: 1.3;
+}
+
+.notion-like-editor .ProseMirror p {
+  margin-bottom: 0.5em;
+  line-height: 1.5;
   min-height: 1.5em;
 }
 
-/* Mejorar el área del editor */
-.ProseMirror {
-  min-height: 600px;
-  max-width: 100%;
-  padding: 2rem;
-  font-size: 16px;
-  line-height: 1.6;
+.notion-like-editor .ProseMirror ul,
+.notion-like-editor .ProseMirror ol {
+  padding-left: 1.5em;
+  margin-bottom: 0.5em;
 }
 
-/* Ajustar el prose para que ocupe todo el ancho */
-.prose {
-  max-width: none;
+.notion-like-editor .ProseMirror ul li {
+  list-style-type: disc;
 }
 
-/* Mejorar el placeholder */
-.ProseMirror p.is-editor-empty:first-child::before {
-  color: #9ca3af;
-  content: attr(data-placeholder);
+.notion-like-editor .ProseMirror ol li {
+  list-style-type: decimal;
+}
+
+.notion-like-editor .ProseMirror li {
+  padding: 3px 0;
+}
+
+.notion-like-editor .ProseMirror blockquote {
+  border-left: 3px solid #e1e1e0;
+  margin-left: 0;
+  padding-left: 1em;
+  color: #6b6a68;
+}
+
+.notion-like-editor .ProseMirror code {
+  background-color: rgba(135, 131, 120, 0.15);
+  border-radius: 3px;
+  padding: 0.2em 0.4em;
+  font-size: 85%;
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.notion-like-editor .ProseMirror pre {
+  background-color: #f6f6f4;
+  border-radius: 3px;
+  padding: 0.5em 1em;
+}
+
+.notion-like-editor .ProseMirror pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+/* Estilos para placeholder */
+.notion-like-editor .ProseMirror p.is-editor-empty:first-child::before {
+  color: var(--notion-text-light);
+  content: "Empieza escribiendo o pega tu briefing aquí...";
   float: left;
   pointer-events: none;
   height: 0;
 }
 
-
-/* Mejorar el scroll para el editor */
-.ProseMirror {
-  overflow-y: auto;
-  max-height: calc(100vh - 200px);
+/* Estilos para el focus de los elementos */
+.notion-like-editor .has-focus {
+  background-color: rgba(35, 131, 226, 0.03);
+  border-radius: 3px;
+  transition: box-shadow 0.2s ease;
 }
 
-/* Estilo para modo oscuro */
-.dark .ProseMirror {
-  color: rgb(229, 231, 235);
+/* Estilos para botones flotantes */
+.floating-buttons {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  z-index: 50;
 }
 
-
-/* Bordes suaves para bloques */
-.ProseMirror > * {
+.floating-button {
   border-radius: 4px;
-  padding: 2px 0;
+  box-shadow: var(--notion-shadow);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  background-color: white;
 }
 
-/* Tipografía mejorada */
-.ProseMirror {
-  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+.floating-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  background-color: var(--notion-bg-hover);
 }
 
-/* Espacio entre secciones */
-.ProseMirror h2:not(:first-child) {
-  margin-top: 2.5em;
+/* Estilos para la barra superior */
+.editor-topbar {
+  padding: 0.75rem 1.5rem;
+  background-color: white;
+  z-index: 10;
 }
 
-/* Mejor contraste para los headings */
-.ProseMirror h1, .ProseMirror h2, .ProseMirror h3 {
-  color: rgb(17, 24, 39);
-  font-weight: 700;
+.editor-topbar-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--notion-text-default);
+  margin: 0;
+  padding: 0;
+  line-height: 1.3;
+  outline: none;
+  border: none;
+  background: transparent;
 }
 
-.dark .ProseMirror h1, 
-.dark .ProseMirror h2, 
-.dark .ProseMirror h3 {
-  color: rgb(243, 244, 246);
+.editor-topbar-title:focus {
+  border-bottom: 2px solid var(--notion-border-focus);
+  padding-bottom: 2px;
 }
 
-/* Asegurar que todo el contenido del editor sea editable */
-.ProseMirror * {
-  user-select: text !important;
-  -webkit-user-select: text !important;
-  -moz-user-select: text !important;
-  -ms-user-select: text !important;
-  cursor: text !important;
+/* Estilos para el slash command */
+.slash-command {
+  position: absolute;
+  z-index: 50;
+  background-color: white;
+  border-radius: 0.375rem;
+  box-shadow: var(--notion-shadow);
+  overflow: hidden;
 }
 
-/* Asegurar que nada bloquee la edición */
-.ProseMirror h1, 
-.ProseMirror h2, 
-.ProseMirror h3, 
-.ProseMirror p {
-  pointer-events: auto !important;
-  position: relative;
+.slash-command-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
 }
 
-/* Asegurar que el placeholder no bloquee la edición */
-.ProseMirror p.is-editor-empty:first-child::before {
-  pointer-events: none !important;
-  user-select: none !important;
+.slash-command-item:hover {
+  background-color: var(--notion-bg-hover);
 }
 
-/* Asegurar que focus funciona en todos los elementos */
-.ProseMirror *:focus {
-  outline: none !important;
+/* Estilos para el floating toolbar */
+.floating-menu {
+  position: absolute;
+  z-index: 50;
+  margin-top: -0.25rem;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s, visibility 0.2s;
+  border-radius: 0.375rem;
+  background-color: white;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.1)) drop-shadow(0 1px 1px rgb(0 0 0 / 0.06));
+  overflow: hidden;
 }
 
-/* Asegurar que los headings son editables */
-.ProseMirror [contenteditable] {
-  -webkit-user-modify: read-write-plaintext-only;
-  user-modify: read-write-plaintext-only;
+.floating-menu.is-active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Estilos para los dropdowns */
+.dropdown-menu-content {
+  background-color: white !important;
+  border: 1px solid #E6E6E6 !important;
+  box-shadow: var(--notion-shadow) !important;
+  border-radius: 4px !important;
+  padding: 4px 0 !important;
+}
+
+.dropdown-menu-item {
+  padding: 6px 12px !important;
+  font-size: 14px !important;
+  color: var(--notion-text-default) !important;
+}
+
+.dropdown-menu-item:hover {
+  background-color: var(--notion-bg-hover) !important;
+}
+
+/* Estilos para los selectores */
+.notion-selector {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--notion-text-gray);
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 20ms ease-in;
+}
+
+.notion-selector:hover {
+  background-color: var(--notion-bg-hover);
+}
+
+/* Estilos para los tooltips */
+.tippy-box {
+  background-color: white !important;
+  color: var(--notion-text-default) !important;
+  box-shadow: var(--notion-shadow) !important;
+  border: 1px solid #E6E6E6 !important;
+  border-radius: 4px !important;
+}
+
+.tippy-arrow {
+  color: white !important;
+}
+
+/* Modo oscuro - ajustes adicionales */
+.dark .notion-like-editor .ProseMirror {
+  color: var(--notion-text-default);
+}
+
+.dark .notion-like-editor .ProseMirror h1,
+.dark .notion-like-editor .ProseMirror h2,
+.dark .notion-like-editor .ProseMirror h3 {
+  color: var(--notion-text-default);
+}
+
+.dark .notion-like-editor .ProseMirror blockquote {
+  color: var(--notion-text-gray);
+  border-left-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark .notion-like-editor .ProseMirror code {
+  background-color: rgba(135, 131, 120, 0.3);
+}
+
+.dark .notion-like-editor .has-focus {
+  background-color: rgba(35, 131, 226, 0.06);
+}
+
+.dark .floating-button {
+  background-color: var(--notion-bg-default);
+  box-shadow: rgba(15, 15, 15, 0.2) 0px 0px 0px 1px, 
+              rgba(15, 15, 15, 0.2) 0px 2px 4px;
+}
+
+.dark .tippy-box,
+.dark .dropdown-menu-content {
+  background-color: var(--notion-bg-default) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .tippy-arrow {
+  color: var(--notion-bg-default) !important;
+}
+
+/* Ajustes de alineación para el topbar */
+.notion-like-editor, 
+.editor-topbar > div,
+.editor-topbar .breadcrumbs {
+  max-width: 900px;
+  margin: 0 auto;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+}
+
+/* Asegurar que el título y contenido estén alineados */
+.editor-topbar-title,
+.notion-like-editor .ProseMirror {
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.editor-topbar {
+  padding-top: 120px !important;
 }

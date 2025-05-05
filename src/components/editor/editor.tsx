@@ -110,7 +110,7 @@ export default function RichEditor({ initialContent, onChange }: RichEditorProps
     content: `<p></p>`, // Asegurar que el editor siempre tiene contenido editable
     editorProps: {
       attributes: {
-        class: 'prose prose-base sm:prose lg:prose-lg dark:prose-invert focus:outline-none w-full min-h-[600px] p-8 notion-like',
+        class: 'prose prose-base sm:prose lg:prose-lg focus:outline-none max-w-none min-h-[calc(100vh-150px)]',
         contenteditable: 'true', // Asegurar que todo es editable
       },
     },
@@ -130,7 +130,7 @@ export default function RichEditor({ initialContent, onChange }: RichEditorProps
   }, [editor, initialContent]); // Agregar initialContent a las dependencias
 
   return (
-    <div className="relative w-full">
+    <div className="notion-like-editor">
       {editor && (
         <BubbleMenu 
           editor={editor} 
