@@ -3,13 +3,18 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Loader2, Wand2, AlertCircle, Sparkles } from 'lucide-react';
+import { Loader2, Wand2, AlertCircle, Sparkles, HelpCircle } from 'lucide-react';
 
 // Componentes UI
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import dynamic from 'next/dynamic';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Lazy load del Editor de Tiptap
 const RichEditor = dynamic(() => import('@/components/editor/editor'), { ssr: false });
@@ -126,31 +131,44 @@ export default function EditorPage() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <header className="mb-8 text-center">
-        <div className="flex justify-center mb-2">
-          <span className="text-3xl">🪄</span>
-        </div>
-        <h1 className="text-2xl font-bold mb-2">Winclap Storyboard Generator</h1>
-        <p className="text-gray-500">Pega o escribe tu briefing y genéralo en formato storyboard</p>
-      </header>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto py-8 px-4 max-w-7xl">
+        {/* Header */}
+        <header className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🪄</span>
+            <h1 className="text-xl font-semibold">Winclap Storyboard Generator</h1>
+          </div>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-gray-500">
+                  <HelpCircle className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p className="text-sm">Tips rápidos:</p>
+                <ul className="list-disc ml-4 text-sm space-y-1">
+                  <li>Escribiste "/" para comandos</li>
+                  <li>Incluí cliente, objetivo, target</li>
+                  <li>Editá antes de generar</li>
+                </ul>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </header>
 
-      {error && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Editor de Briefing</CardTitle>
-          <CardDescription>
-            Escribe o pega tu briefing aquí. Incluye información sobre cliente, objetivo, target, mensaje clave y otros detalles.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        {/* Editor principal */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <RichEditor
             initialContent={editorContent || {
               objective: '',
@@ -178,65 +196,59 @@ export default function EditorPage() {
               setFreeTextContent(text || '');
             }}
           />
-        </CardContent>
-        <CardFooter className="flex gap-4">
-          <Button
-            onClick={handleReorganizeWithAI}
-            disabled={isReorganizing || !freeTextContent.trim() || isGenerating}
-            className="bg-purple-600 text-white hover:bg-purple-700"
-          >
-            {isReorganizing ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Reorganizando...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Reorganizar con IA
-              </>
-            )}
-          </Button>
+        </div>
 
-          <Button
-            onClick={handleGenerateStoryboard}
-            disabled={isGenerating || !editorContent || isReorganizing}
-            className="bg-black text-white hover:bg-gray-800"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Generando...
-              </>
-            ) : (
-              <>
-                <Wand2 className="h-4 w-4 mr-2" />
-                Generar Storyboard
-              </>
-            )}
-          </Button>
-        </CardFooter>
-      </Card>
+        {/* Barra de acciones fija */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-sm">
+          <div className="container mx-auto max-w-7xl flex items-center justify-between">
+            <div className="flex gap-3">
+              <Button
+                onClick={handleReorganizeWithAI}
+                disabled={isReorganizing || !freeTextContent.trim() || isGenerating}
+                className="bg-purple-600 text-white hover:bg-purple-700"
+              >
+                {isReorganizing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Reorganizando...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Reorganizar con IA
+                  </>
+                )}
+              </Button>
 
-      {/* Ayuda sobre el formato */}
-      <Card className="border-dashed border-gray-300">
-        <CardHeader>
-          <CardTitle className="text-sm">Formato sugerido para el briefing</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-gray-600">
-          <p>Para mejores resultados, incluye:</p>
-          <ul className="list-disc ml-6 mt-2 space-y-1">
-            <li>Cliente: [Nombre del cliente]</li>
-            <li>Objetivo: [Objetivo de la campaña]</li>
-            <li>Target: [Descripción del público objetivo]</li>
-            <li>Mensaje clave: [Mensaje principal]</li>
-            <li>Plataforma: [TikTok, Instagram, etc.]</li>
-            <li>MOM: [Momento de inspiración o idea creativa]</li>
-            <li>Creador: [Nombre del creador]</li>
-            <li>Referencias: [Enlaces o descripciones de referencias]</li>
-          </ul>
-        </CardContent>
-      </Card>
+              <Button
+                onClick={handleGenerateStoryboard}
+                disabled={isGenerating || !editorContent || isReorganizing}
+                className="bg-black text-white hover:bg-gray-800"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="h-4 w-4 mr-2" />
+                    Generar Storyboard
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Indicador de progreso */}
+            <div className="text-sm text-gray-500">
+              {freeTextContent ? freeTextContent.length + ' caracteres' : 'Escribe tu briefing...'}
+            </div>
+          </div>
+        </div>
+
+        {/* Espacio para compensar la barra fija */}
+        <div className="h-20"></div>
+      </div>
     </div>
   );
 }

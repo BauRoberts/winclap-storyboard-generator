@@ -1,9 +1,16 @@
 'use client';
 
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useEffect } from 'react';
+import CharacterCount from '@tiptap/extension-character-count';
+import Focus from '@tiptap/extension-focus';
+import Typography from '@tiptap/extension-typography';
+import Link from '@tiptap/extension-link';
+import TextAlign from '@tiptap/extension-text-align';
+import Commands from './tiptap/slash-commands';
+import { FloatingToolbar } from './tiptap/FloatingToolbar';
 
 interface AIContent {
   objective: string;
@@ -32,9 +39,11 @@ interface EditorJSON {
   type: string;
   content?: Array<{
     type: string;
+    attrs?: Record<string, any>;
     content?: Array<{
       type: string;
-      text: string;
+      text?: string;
+      attrs?: Record<string, any>;
     }>;
   }>;
 }
@@ -44,18 +53,64 @@ interface RichEditorProps {
   onChange: (json: AIContent, text?: string) => void;
 }
 
+interface DocContent {
+  type: string;
+  attrs?: Record<string, any>;
+  content?: Array<{
+    type: string;
+    text?: string;
+    attrs?: Record<string, any>;
+  }>;
+}
+
+interface DocStructure {
+  type: string;
+  content: DocContent[];
+}
+
 export default function RichEditor({ initialContent, onChange }: RichEditorProps) {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        heading: {
+          levels: [1, 2, 3],
+        },
+        bulletList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+        orderedList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+      }),
+      Commands,
       Placeholder.configure({
-        placeholder: 'Escribe o pega tu briefing aquí...\n\nPor ejemplo:\n- Cliente: Nike\n- Objetivo: Aumentar descargas de la app\n- Target: Jóvenes 18-24 años\n- Mensaje: Encuentra las zapatillas perfectas en segundos'
+        placeholder: ({ node }) => {
+          if (node.type.name === 'heading') {
+            return 'Título sin texto...';
+          }
+          return 'Empieza escribiendo o pega tu briefing aquí...\n\nPresiona "/" para comandos rápidos';
+        },
+      }),
+      CharacterCount,
+      Focus.configure({
+        className: 'has-focus',
+        mode: 'all',
+      }),
+      Typography,
+      Link.configure({
+        openOnClick: false,
+      }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
       }),
     ],
-    content: '',
+    content: `<p></p>`, // Asegurar que el editor siempre tiene contenido editable
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-base dark:prose-invert focus:outline-none max-w-none min-h-[500px] border border-gray-200 rounded-md p-4 bg-white',
+        class: 'prose prose-base sm:prose lg:prose-lg dark:prose-invert focus:outline-none w-full min-h-[600px] p-8 notion-like',
+        contenteditable: 'true', // Asegurar que todo es editable
       },
     },
     onUpdate({ editor }) {
@@ -65,68 +120,127 @@ export default function RichEditor({ initialContent, onChange }: RichEditorProps
     },
   });
 
-  // Actualizar el contenido del editor cuando initialContent cambie
+  // Cargar contenido inicial SOLO una vez cuando se monta el editor
   useEffect(() => {
     if (editor && initialContent && Object.keys(initialContent).some(key => initialContent[key])) {
-      editor.commands.setContent(formatAsDoc(initialContent));
+      const doc = formatAsDoc(initialContent);
+      editor.commands.setContent(doc);
     }
-  }, [editor, initialContent]);
+  }, [editor]);
 
-  return <EditorContent editor={editor} />;
+  return (
+    <div className="relative w-full">
+      {editor && (
+        <BubbleMenu 
+          editor={editor} 
+          tippyOptions={{ duration: 100 }}
+          className="z-50"
+        >
+          <FloatingToolbar editor={editor} />
+        </BubbleMenu>
+      )}
+      <EditorContent editor={editor} />
+    </div>
+  );
 }
 
-// Formato del contenido reorganizado
-function formatAsDoc(data: AIContent) {
+// Resto del código permanece igual...
+function formatAsDoc(data: AIContent): DocStructure {
+  const sections = [
+    {
+      heading: 'Briefing Storyboard',
+      level: 1,
+      content: []
+    },
+    {
+      heading: '📋 Información General',
+      level: 2,
+      content: [
+        `Objetivo: ${data.objective}`,
+        `Tono: ${data.tone}`,
+        `Propuesta de Valor 1: ${data.valueProp1}`,
+        `Propuesta de Valor 2: ${data.valueProp2}`
+      ]
+    },
+    {
+      heading: '🎬 Storyboard',
+      level: 2,
+      content: [
+        `Hook: ${data.hook}`,
+        `Descripción: ${data.description}`,
+        `CTA: ${data.cta}`
+      ]
+    },
+    {
+      heading: 'Escena 1: Hook',
+      level: 3,
+      content: [
+        `Script: ${data.scene1Script}`,
+        `Visual: ${data.scene1Visual}`,
+        `Sonido: ${data.scene1Sound}`
+      ]
+    },
+    {
+      heading: 'Escena 2: Desarrollo',
+      level: 3,
+      content: [
+        `Script: ${data.scene2Script}`,
+        `Visual: ${data.scene2Visual}`,
+        `Sonido: ${data.scene2Sound}`
+      ]
+    },
+    {
+      heading: 'Escena 3: Desarrollo',
+      level: 3,
+      content: [
+        `Script: ${data.scene3Script}`,
+        `Visual: ${data.scene3Visual}`,
+        `Sonido: ${data.scene3Sound}`
+      ]
+    },
+    {
+      heading: 'Escena 4: CTA',
+      level: 3,
+      content: [
+        `Script: ${data.scene4Script}`,
+        `Visual: ${data.scene4Visual}`,
+        `Sonido: ${data.scene4Sound}`
+      ]
+    }
+  ];
+
+  const content: DocContent[] = [];
+  
+  sections.forEach(section => {
+    // Añadir heading
+    content.push({
+      type: 'heading',
+      attrs: { level: section.level },
+      content: [{ type: 'text', text: section.heading }]
+    });
+    
+    // Añadir contenido
+    section.content.forEach(text => {
+      if (text) {
+        content.push({
+          type: 'paragraph',
+          content: [{ type: 'text', text: text }]
+        });
+      }
+    });
+  });
+
   return {
     type: 'doc',
-    content: [
-      ...toParagraph(`📋 OBJETIVO: ${data.objective}`),
-      ...toParagraph(`🎯 TONO: ${data.tone}`),
-      ...toParagraph(`💡 PROPUESTA DE VALOR 1: ${data.valueProp1}`),
-      ...toParagraph(`💡 PROPUESTA DE VALOR 2: ${data.valueProp2}`),
-      ...toParagraph(''),
-      ...toParagraph(`🎬 STORYBOARD`),
-      ...toParagraph(''),
-      ...toParagraph(`🪝 HOOK: ${data.hook}`),
-      ...toParagraph(`📝 DESCRIPCIÓN: ${data.description}`),
-      ...toParagraph(`📣 CTA: ${data.cta}`),
-      ...toParagraph(''),
-      ...toParagraph('━━━━━━━━━━━━━━━━━━━━━━━━━━'),
-      ...toParagraph(''),
-      ...toParagraph(`🎬 ESCENA 1 (Hook)`),
-      ...toParagraph(`Script: ${data.scene1Script}`),
-      ...toParagraph(`Visual: ${data.scene1Visual}`),
-      ...toParagraph(`Sonido: ${data.scene1Sound}`),
-      ...toParagraph(''),
-      ...toParagraph(`🎬 ESCENA 2 (Desarrollo)`),
-      ...toParagraph(`Script: ${data.scene2Script}`),
-      ...toParagraph(`Visual: ${data.scene2Visual}`),
-      ...toParagraph(`Sonido: ${data.scene2Sound}`),
-      ...toParagraph(''),
-      ...toParagraph(`🎬 ESCENA 3 (Desarrollo)`),
-      ...toParagraph(`Script: ${data.scene3Script}`),
-      ...toParagraph(`Visual: ${data.scene3Visual}`),
-      ...toParagraph(`Sonido: ${data.scene3Sound}`),
-      ...toParagraph(''),
-      ...toParagraph(`🎬 ESCENA 4 (CTA)`),
-      ...toParagraph(`Script: ${data.scene4Script}`),
-      ...toParagraph(`Visual: ${data.scene4Visual}`),
-      ...toParagraph(`Sonido: ${data.scene4Sound}`),
-    ]
+    content: content
   };
 }
 
-function toParagraph(text: string) {
-  return text ? [{ type: 'paragraph', content: [{ type: 'text', text }] }] : [];
-}
-
-// Parser simplificado para no interferir con el flujo libre
 function parseEditorContent(doc: EditorJSON): AIContent {
   const text = doc.content?.flatMap((block) => {
     return block.content?.map((c) => c.text) || [];
   }).join('\n') || '';
 
-  // Inicia con un objeto vacío que cumple con la interfaz
   const result: AIContent = {
     objective: '',
     tone: '',
@@ -149,39 +263,43 @@ function parseEditorContent(doc: EditorJSON): AIContent {
     scene4Sound: '',
   };
 
-  // Solo intenta parsear si el texto tiene formato estructurado
-  if (text.includes('OBJETIVO:') || text.includes('TONO:')) {
-    // Parseo estructurado
-    const lines = text.split('\n');
-    lines.forEach(line => {
-      const scriptMatch = line.match(/Script:\s*(.+)/i);
-      const objectiveMatch = line.match(/OBJETIVO:\s*(.+)/i);
-      const toneMatch = line.match(/TONO:\s*(.+)/i);
-      const prop1Match = line.match(/PROPUESTA DE VALOR 1:\s*(.+)/i);
-      const prop2Match = line.match(/PROPUESTA DE VALOR 2:\s*(.+)/i);
-      const hookMatch = line.match(/HOOK:\s*(.+)/i);
-      const descMatch = line.match(/DESCRIPCIÓN:\s*(.+)/i);
-      const ctaMatch = line.match(/CTA:\s*(.+)/i);
+  // Parseo mejorado para headings y estructura
+  const lines = text.split('\n');
+  let currentScene = '';
+  
+  lines.forEach(line => {
+    // Detectar encabezados
+    if (line.includes('Escena 1')) currentScene = 'scene1';
+    else if (line.includes('Escena 2')) currentScene = 'scene2';
+    else if (line.includes('Escena 3')) currentScene = 'scene3';
+    else if (line.includes('Escena 4')) currentScene = 'scene4';
+    
+    // Parsear contenido
+    const objectiveMatch = line.match(/Objetivo:\s*(.+)/i);
+    const toneMatch = line.match(/Tono:\s*(.+)/i);
+    const hookMatch = line.match(/Hook:\s*(.+)/i);
+    const descMatch = line.match(/Descripción:\s*(.+)/i);
+    const ctaMatch = line.match(/CTA:\s*(.+)/i);
+    const scriptMatch = line.match(/Script:\s*(.+)/i);
+    const visualMatch = line.match(/Visual:\s*(.+)/i);
+    const soundMatch = line.match(/Sonido:\s*(.+)/i);
 
-      if (objectiveMatch) result.objective = objectiveMatch[1];
-      if (toneMatch) result.tone = toneMatch[1];
-      if (prop1Match) result.valueProp1 = prop1Match[1];
-      if (prop2Match) result.valueProp2 = prop2Match[1];
-      if (hookMatch) result.hook = hookMatch[1];
-      if (descMatch) result.description = descMatch[1];
-      if (ctaMatch) result.cta = ctaMatch[1];
+    if (objectiveMatch) result.objective = objectiveMatch[1];
+    if (toneMatch) result.tone = toneMatch[1];
+    if (hookMatch) result.hook = hookMatch[1];
+    if (descMatch) result.description = descMatch[1];
+    if (ctaMatch) result.cta = ctaMatch[1];
 
-      // Aquí deberíamos identificar a qué escena pertenece cada match
-      // pero para simplificar, asumimos que aparecen en orden
-      if (scriptMatch) {
-        if (!result.scene1Script) result.scene1Script = scriptMatch[1];
-        else if (!result.scene2Script) result.scene2Script = scriptMatch[1];
-        else if (!result.scene3Script) result.scene3Script = scriptMatch[1];
-        else if (!result.scene4Script) result.scene4Script = scriptMatch[1];
-      }
-      // Mismo patrón para visual y sound...
-    });
-  }
+    if (scriptMatch && currentScene) {
+      result[`${currentScene}Script`] = scriptMatch[1];
+    }
+    if (visualMatch && currentScene) {
+      result[`${currentScene}Visual`] = visualMatch[1];
+    }
+    if (soundMatch && currentScene) {
+      result[`${currentScene}Sound`] = soundMatch[1];
+    }
+  });
 
   return result;
 }
