@@ -1,3 +1,4 @@
+//Users/bautistaroberts/winclap-storyboard-generator/src/types/types.ts
 export interface AIContent {
     objective: string;
     tone: string;

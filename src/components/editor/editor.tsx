@@ -3,7 +3,7 @@
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import CharacterCount from '@tiptap/extension-character-count';
 import Focus from '@tiptap/extension-focus';
 import Typography from '@tiptap/extension-typography';
@@ -73,6 +73,10 @@ interface DocStructure {
 
 // Asegurarse de que el componente reciba las props correctamente
 const RichEditor: React.FC<RichEditorProps> = ({ initialContent, onChange }) => {
+  // Añadir ref para controlar inicialización
+  const contentInitialized = useRef(false);
+  const isUpdating = useRef(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -113,11 +117,13 @@ const RichEditor: React.FC<RichEditorProps> = ({ initialContent, onChange }) => 
     content: `<p></p>`, // Asegurar que el editor siempre tiene contenido editable
     editorProps: {
       attributes: {
-        class: 'prose prose-base sm:prose lg:prose-lg focus:outline-none max-w-none min-h-[calc(100vh-150px)] text-sm', // Añadido text-xs para el tamaño
+        class: 'prose prose-base sm:prose lg:prose-lg focus:outline-none max-w-none min-h-[calc(100vh-150px)] text-sm',
         contenteditable: 'true', // Asegurar que todo es editable
       },
     },
     onUpdate({ editor }) {
+      if (isUpdating.current) return;
+      
       const json = editor.getJSON() as EditorJSON;
       const text = editor.getText();
       if (onChange) {
@@ -126,16 +132,31 @@ const RichEditor: React.FC<RichEditorProps> = ({ initialContent, onChange }) => 
     },
   });
 
-  // Cargar contenido inicial SOLO una vez cuando se monta el editor
+  // Inicializar contenido solo una vez
   useEffect(() => {
-    if (editor && initialContent && Object.keys(initialContent).some(key => initialContent[key])) {
-      const doc = formatAsDoc(initialContent);
-      editor.commands.setContent(doc);
+    if (editor && initialContent && !contentInitialized.current) {
+      console.log("Editor recibiendo contenido inicial");
+      
+      const hasContent = Object.values(initialContent).some(val => 
+        val && typeof val === 'string' && val.trim() !== ''
+      );
+      
+      if (hasContent) {
+        isUpdating.current = true;
+        const doc = formatAsDoc(initialContent);
+        editor.commands.setContent(doc);
+        contentInitialized.current = true;
+        console.log("Contenido actualizado en editor");
+        
+        setTimeout(() => {
+          isUpdating.current = false;
+        }, 100);
+      }
     }
-  }, [editor, initialContent]); // Agregar initialContent a las dependencias
+  }, [editor, initialContent]);
 
   return (
-    <div className="notion-like-editor mt-6"> {/* Añadido margen superior */}
+    <div className="notion-like-editor mt-6">
       {editor && (
         <BubbleMenu 
           editor={editor} 

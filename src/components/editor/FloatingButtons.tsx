@@ -1,4 +1,3 @@
-// src/components/editor/FloatingButtons.tsx
 'use client';
 
 import { useState } from 'react';
@@ -21,6 +20,7 @@ interface FloatingButtonsProps {
     reorganize?: boolean;
     generate?: boolean;
   };
+  viewMode?: 'single' | 'dual';
 }
 
 export default function FloatingButtons({
@@ -29,7 +29,8 @@ export default function FloatingButtons({
   isReorganizing,
   isGenerating,
   charactersCount,
-  disabled = {}
+  disabled = {},
+  viewMode = 'single'
 }: FloatingButtonsProps) {
   // Estado para mostrar info sobre caracteres
   const [showCharCount, setShowCharCount] = useState(false);
@@ -43,38 +44,40 @@ export default function FloatingButtons({
         </div>
       )}
       
-      {/* Botón para reorganizar */}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={onReorganize}
-              disabled={isReorganizing || disabled.reorganize}
-              className="bg-purple-600 text-white hover:bg-purple-700 shadow-lg transition-transform hover:scale-105"
-              size="default"
-              onMouseOver={() => setShowCharCount(true)}
-              onMouseLeave={() => setShowCharCount(false)}
-            >
-              {isReorganizing ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Reorganizando...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Reorganizar con IA
-                </>
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="left">
-            <p>Ordena tu texto con IA</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      {/* Botón para reorganizar - solo visible en modo single */}
+      {viewMode === 'single' && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={onReorganize}
+                disabled={isReorganizing || disabled.reorganize}
+                className="bg-purple-600 text-white hover:bg-purple-700 shadow-lg transition-transform hover:scale-105"
+                size="default"
+                onMouseOver={() => setShowCharCount(true)}
+                onMouseLeave={() => setShowCharCount(false)}
+              >
+                {isReorganizing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Reorganizando...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Reorganizar con IA
+                  </>
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left">
+              <p>Ordena tu texto con IA</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
 
-      {/* Botón para generar storyboard */}
+      {/* Botón para generar storyboard - visible en ambos modos */}
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>

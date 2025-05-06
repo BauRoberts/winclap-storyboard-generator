@@ -1,7 +1,6 @@
-//Users/bautistaroberts/winclap-storyboard-generator/src/app/(dashboard)/editor/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -12,16 +11,27 @@ import FloatingButtons from '@/components/editor/FloatingButtons';
 import { AIContent, emptyAIContent } from '@/types/types';
 
 const RichEditor = dynamic(() => import('@/components/editor/editor'), { ssr: false });
+const DualEditorView = dynamic(() => import('@/components/editor/DualEditorView'), { ssr: false });
 
 export default function EditorPage() {
   const { status } = useSession();
   const router = useRouter();
 
+  // Estados generales
   const [isReorganizing, setIsReorganizing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Estados para el modo de vista y contenidos
+  const [viewMode, setViewMode] = useState<'single' | 'dual'>('single');
   const [editorContent, setEditorContent] = useState<AIContent | null>(null);
+  const [originalContent, setOriginalContent] = useState<AIContent | null>(null);
+  const [reorganizedContent, setReorganizedContent] = useState<AIContent | null>(null);
   const [freeTextContent, setFreeTextContent] = useState<string>('');
+  const [selectedContentSource, setSelectedContentSource] = useState<'original' | 'reorganized'>('original');
+  
+  // Estado para prevenir actualizaciones en cascada
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Estados para los selectores
   const [documentTitle, setDocumentTitle] = useState('Storyboard sin título');
@@ -57,6 +67,72 @@ export default function EditorPage() {
     setSelectedCreator(value);
   };
 
+  // Handler para seleccionar qué contenido usar para la generación
+  const handleContentSelect = (source: 'original' | 'reorganized') => {
+    if (isUpdating) return;
+    
+    console.log('Seleccionando fuente:', source);
+    setIsUpdating(true);
+    setSelectedContentSource(source);
+    
+    if (source === 'original' && originalContent) {
+      setEditorContent(originalContent);
+    } else if (source === 'reorganized' && reorganizedContent) {
+      setEditorContent(reorganizedContent);
+    }
+    
+    setTimeout(() => setIsUpdating(false), 100);
+  };
+
+  // Manejadores para los cambios en los editores
+  const handleOriginalChange = (json: AIContent, text: string) => {
+    if (isUpdating) return;
+    
+    console.log("Actualización en editor original");
+    setIsUpdating(true);
+    setOriginalContent(json);
+    
+    if (selectedContentSource === 'original') {
+      setEditorContent(json);
+      setFreeTextContent(text);
+    }
+    
+    setTimeout(() => setIsUpdating(false), 100);
+  };
+
+  const handleReorganizedChange = (json: AIContent, text: string) => {
+    if (isUpdating) return;
+    
+    console.log("Actualización en editor reorganizado");
+    setIsUpdating(true);
+    setReorganizedContent(json);
+    
+    if (selectedContentSource === 'reorganized') {
+      setEditorContent(json);
+      setFreeTextContent(text);
+    }
+    
+    setTimeout(() => setIsUpdating(false), 100);
+  };
+
+  // Volver a la vista simple
+  const handleBackToSingle = () => {
+    if (isUpdating) return;
+    
+    console.log("Volviendo a vista simple con fuente:", selectedContentSource);
+    setIsUpdating(true);
+    setViewMode('single');
+    
+    // Usar el contenido seleccionado actualmente
+    if (selectedContentSource === 'original' && originalContent) {
+      setEditorContent(originalContent);
+    } else if (reorganizedContent) {
+      setEditorContent(reorganizedContent);
+    }
+    
+    setTimeout(() => setIsUpdating(false), 100);
+  };
+
   if (status === 'loading') {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-gray-500" /></div>;
   }
@@ -71,6 +147,9 @@ export default function EditorPage() {
     setError(null);
 
     try {
+      // Guardar el contenido original primero
+      setOriginalContent(editorContent || emptyAIContent);
+      
       const response = await fetch('/api/reorganize-content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -80,8 +159,22 @@ export default function EditorPage() {
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.error || 'Error al reorganizar contenido');
 
-      setEditorContent(result.aiContent);
+      console.log("API Response:", result);
+      
+      // Asegurarse de que tenemos un objeto AIContent válido
+      const aiContent = result.aiContent;
+      
+      // Establecer el contenido reorganizado
+      setReorganizedContent(aiContent);
+      
+      // Cambiar a vista dual y seleccionar el contenido reorganizado por defecto
+      setViewMode('dual');
+      setSelectedContentSource('reorganized');
+      
+      // También actualizar el contenido del editor actual
+      setEditorContent(aiContent);
     } catch (err) {
+      console.error("Error reorganizando:", err);
       setError(err instanceof Error ? err.message : 'Error inesperado');
     } finally {
       setIsReorganizing(false);
@@ -90,7 +183,7 @@ export default function EditorPage() {
 
   const handleGenerateStoryboard = async () => {
     if (!editorContent) {
-      setError('Por favor, reorganiza el contenido primero');
+      setError('Por favor, asegúrate de tener contenido para generar el storyboard');
       return;
     }
 
@@ -124,6 +217,53 @@ export default function EditorPage() {
     }
   };
 
+  // Monitorear cambios en los estados clave para depuración
+  useEffect(() => {
+    console.log("Modo de vista actual:", viewMode);
+    console.log("Fuente seleccionada:", selectedContentSource);
+  }, [viewMode, selectedContentSource]);
+
+  // Renderizar el editor apropiado según el modo de vista
+  const renderEditor = () => {
+    if (viewMode === 'single') {
+      return (
+        <RichEditor
+          initialContent={editorContent || emptyAIContent}
+          onChange={(json, text) => {
+            if (isUpdating) return;
+            
+            console.log("Cambio en editor simple");
+            setIsUpdating(true);
+            setEditorContent(json);
+            setFreeTextContent(text);
+            
+            // También actualizar el contenido original o reorganizado según cuál esté seleccionado
+            if (selectedContentSource === 'original') {
+              setOriginalContent(json);
+            } else {
+              setReorganizedContent(json);
+            }
+            
+            setTimeout(() => setIsUpdating(false), 100);
+          }}
+          key="single-editor-static"
+        />
+      );
+    } else {
+      return (
+        <DualEditorView
+          originalContent={originalContent || emptyAIContent}
+          reorganizedContent={reorganizedContent || emptyAIContent}
+          onOriginalChange={handleOriginalChange}
+          onReorganizedChange={handleReorganizedChange}
+          selectedSource={selectedContentSource}
+          onSelectSource={handleContentSelect}
+          onBackToSingle={handleBackToSingle}
+        />
+      );
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <div className="flex-1 flex flex-col">
@@ -153,13 +293,7 @@ export default function EditorPage() {
         )}
 
         <div className="flex-1">
-          <RichEditor
-            initialContent={editorContent || emptyAIContent}
-            onChange={(json, text) => {
-              setEditorContent(json);
-              setFreeTextContent(text || '');
-            }}
-          />
+          {renderEditor()}
         </div>
       </div>
 
@@ -173,6 +307,7 @@ export default function EditorPage() {
           reorganize: !freeTextContent.trim() || isGenerating,
           generate: !editorContent || isReorganizing
         }}
+        viewMode={viewMode}
       />
     </div>
   );
