@@ -3,39 +3,20 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { signOut, useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react'; // Removed signOut as it's unused
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion'; // Removed AnimatePresence as it's unused
 import { 
   RefreshCw, 
-  MessageSquareQuote,
   Settings,
-  HelpCircle,
-  Search,
-  MoreHorizontal,
   Building2,
-  ChevronRight,
   PlusCircle,
-  LogOut,
   ChevronLeft,
-  Menu,
-  UserCircle,
   Users,
-  Home,
-  Calendar,
   FileImage
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Tooltip,
   TooltipContent,
@@ -45,9 +26,9 @@ import {
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session } = useSession(); // We'll keep this for now, might be needed later
   const [isExpanded, setIsExpanded] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(false); // We'll keep this for now, might be needed later
 
   // Check if we're on mobile
   useEffect(() => {
@@ -139,7 +120,7 @@ export default function Sidebar() {
                 ${!isExpanded ? 'justify-center px-1 py-3' : ''}
               `}
             >                              
-              <item.icon className={`${isExpanded ? 'h-3 w-3 mr-2' : 'h-3 w-3'}`} />
+              <item.icon className={`${isExpanded ? 'h-4 w-4 mr-2' : 'h-4 w-4'}`} />
               <motion.span 
                 variants={textVariants}
                 initial={isExpanded ? "expanded" : "collapsed"}
