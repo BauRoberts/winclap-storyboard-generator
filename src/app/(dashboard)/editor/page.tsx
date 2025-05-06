@@ -1,3 +1,4 @@
+//Users/bautistaroberts/winclap-storyboard-generator/src/app/(dashboard)/editor/page.tsx
 'use client';
 
 import { useState } from 'react';

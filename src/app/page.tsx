@@ -1,3 +1,4 @@
+//Users/bautistaroberts/winclap-storyboard-generator/src/app/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -59,7 +60,7 @@ export default function Home() {
               className="w-full h-12 border-gray-200 bg-white text-black hover:bg-gray-50 flex items-center justify-center gap-2"
               onClick={async () => {
                 setIsLoading(true);
-                await signIn('google', { callbackUrl: '/form' });
+                await signIn('google', { callbackUrl: '/editor' });
               }}
               disabled={isLoading}
             >
