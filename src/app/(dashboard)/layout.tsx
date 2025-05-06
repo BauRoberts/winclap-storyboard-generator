@@ -45,7 +45,7 @@ export default function DashboardLayout({
   if (status === 'loading') {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-white-500" />
       </div>
     );
   }
@@ -56,7 +56,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-white">
       {/* Mobile menu button - only visible on small screens */}
       {isMobile && !sidebarOpen && (
         <Button
@@ -83,7 +83,7 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className="flex flex-col flex-1 transition-all duration-300 ease-in-out">
         <Topbar />
-        <main className="flex-1 overflow-y-auto p-4">
+        <main className="flex-1 overflow-y-auto">
           {children}
         </main>
       </div>

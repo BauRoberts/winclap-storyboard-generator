@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import PillSelector from './PillSelector';
 import MultiPillSelector from './MultiPillSelector';
+import { ChevronDown } from 'lucide-react';
 
 interface Option {
   id: string;
@@ -14,12 +15,14 @@ interface EditorTopbarProps {
   onTitleChange: (newTitle: string) => void;
   client: string;
   onClientChange: (newClient: string) => void;
+  assets: string;
+  onAssetsChange: (assets: string) => void;
   platform: string[];
   onPlatformChange: (platforms: string[]) => void;
-  template: string;
-  onTemplateChange: (template: string) => void;
-  assetCount: string;
-  onAssetCountChange: (count: string) => void;
+  status: string;
+  onStatusChange: (status: string) => void;
+  creator: string;
+  onCreatorChange: (creator: string) => void;
 }
 
 const mockClients: Option[] = [
@@ -37,10 +40,26 @@ const mockPlatforms: Option[] = [
   { id: 'meta', name: 'Meta' },
 ];
 
-const mockTemplates: Option[] = [
-  { id: 'templateA', name: 'Gancho → Producto → CTA' },
-  { id: 'templateB', name: 'Problema → Solución' },
-  { id: 'templateC', name: 'Testimonio → Producto → CTA' },
+const mockAssets: Option[] = [
+  { id: '1', name: '1' }, 
+  { id: '2', name: '2' }, 
+  { id: '3', name: '3' }, 
+  { id: '4', name: '4' },
+  { id: '5', name: '5' },
+];
+
+const mockStatus: Option[] = [
+  { id: 'not_started', name: 'Not started' },
+  { id: 'in_progress', name: 'In progress' },
+  { id: 'review', name: 'In review' },
+  { id: 'done', name: 'Done' },
+];
+
+const mockCreators: Option[] = [
+  { id: 'user1', name: 'Ana García' },
+  { id: 'user2', name: 'Juan Pérez' },
+  { id: 'user3', name: 'Elena López' },
+  { id: 'user4', name: 'Carlos Ruiz' },
 ];
 
 export default function EditorTopbar({
@@ -48,18 +67,68 @@ export default function EditorTopbar({
   onTitleChange,
   client,
   onClientChange,
+  assets,
+  onAssetsChange,
   platform,
   onPlatformChange,
-  template,
-  onTemplateChange,
-  assetCount,
-  onAssetCountChange,
+  status,
+  onStatusChange,
+  creator,
+  onCreatorChange,
 }: EditorTopbarProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [titleValue, setTitleValue] = useState(title);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Handlers para PillSelector con verificación
+  const handleClientChangeWrapper = (newClient: string) => {
+    console.log('EditorTopbar - Cliente seleccionado:', newClient);
+    if (typeof onClientChange === 'function') {
+      onClientChange(newClient);
+    } else {
+      console.warn('onClientChange is not a function');
+    }
+  };
+
+  const handleAssetsChangeWrapper = (newAssets: string) => {
+    console.log('EditorTopbar - Assets seleccionados:', newAssets);
+    if (typeof onAssetsChange === 'function') {
+      onAssetsChange(newAssets);
+    } else {
+      console.warn('onAssetsChange is not a function');
+    }
+  };
+
+  const handleStatusChangeWrapper = (newStatus: string) => {
+    console.log('EditorTopbar - Estado seleccionado:', newStatus);
+    if (typeof onStatusChange === 'function') {
+      onStatusChange(newStatus);
+    } else {
+      console.warn('onStatusChange is not a function');
+    }
+  };
+
+  const handleCreatorChangeWrapper = (newCreator: string) => {
+    console.log('EditorTopbar - Creador seleccionado:', newCreator);
+    if (typeof onCreatorChange === 'function') {
+      onCreatorChange(newCreator);
+    } else {
+      console.warn('onCreatorChange is not a function');
+    }
+  };
+
+  // Handler para MultiPillSelector
+  const handlePlatformChangeWrapper = (newPlatform: string[]) => {
+    console.log('EditorTopbar - Plataformas seleccionadas:', newPlatform);
+    if (typeof onPlatformChange === 'function') {
+      onPlatformChange(newPlatform);
+    } else {
+      console.warn('onPlatformChange is not a function');
+    }
+  };
+
+  // Título editable
   const handleTitleClick = () => {
     setIsEditing(true);
     setTimeout(() => {
@@ -77,7 +146,9 @@ export default function EditorTopbar({
       setTitleValue('Sin título');
     }
     setIsEditing(false);
-    onTitleChange(titleValue);
+    if (typeof onTitleChange === 'function') {
+      onTitleChange(titleValue);
+    }
   }, [titleValue, onTitleChange]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -99,10 +170,18 @@ export default function EditorTopbar({
     };
   }, [isEditing, titleValue, handleTitleBlur]);
 
+  // Para depuración - mostrar las props recibidas
+  useEffect(() => {
+    console.log('EditorTopbar - Props recibidas:', {
+      client, assets, platform, status, creator
+    });
+  }, [client, assets, platform, status, creator]);
+
   return (
-    <div className="editor-topbar py-4">
-      <div className="flex flex-col max-w-3xl mx-auto px-4">
-        <div ref={titleRef} className="mb-4">
+    <div className="editor-topbar py-6 px-6">
+      <div className="max-w-4xl mx-auto">
+        {/* Título editable */}
+        <div ref={titleRef} className="mb-8">
           {isEditing ? (
             <input
               ref={inputRef}
@@ -111,60 +190,137 @@ export default function EditorTopbar({
               onChange={handleTitleChange}
               onBlur={handleTitleBlur}
               onKeyDown={handleKeyDown}
-              className="text-[1.5rem] font-medium outline-none border-b border-blue-400 pb-0.5 px-0 w-[300px] bg-transparent"
+              className="text-3xl font-bold outline-none border-b border-blue-400 pb-0.5 px-0 w-full bg-transparent"
               placeholder="Sin título"
             />
           ) : (
-            <h1 className="text-[1.5rem] font-medium text-gray-800 cursor-text outline-none" onClick={handleTitleClick}>
+            <h1 
+              className="text-3xl font-bold text-gray-800 cursor-text outline-none" 
+              onClick={handleTitleClick}
+            >
               {titleValue}
             </h1>
           )}
         </div>
 
-        {/* Document Properties */}
-        <div className="flex flex-col gap-4 mt-4">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-gray-500 font-medium">Cliente</span>
-            <PillSelector
-              label="Cliente"
-              value={client}
-              options={mockClients}
-              onChange={onClientChange}
-              color="blue"
-            />
+        {/* Propiedades estilo Notion */}
+        <div className="space-y-5">
+          {/* Cliente */}
+          <div className="flex items-center">
+            <div className="w-32 text-sm text-gray-500 flex items-center">
+              <svg className="w-4 h-4 mr-2 text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17 21V19C17 16.7909 15.2091 15 13 15H5C2.79086 15 1 16.7909 1 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              Cliente
+            </div>
+            <div className="flex-1">
+              <PillSelector
+                label="Cliente"
+                value={client}
+                options={mockClients}
+                onChange={handleClientChangeWrapper}
+                color="blue"
+              />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-gray-500 font-medium">Plataformas</span>
-            <MultiPillSelector
-              label="Plataformas"
-              values={platform}
-              options={mockPlatforms}
-              onChange={onPlatformChange}
-              color="green"
-            />
+          {/* Assets */}
+          <div className="flex items-center">
+            <div className="w-32 text-sm text-gray-500 flex items-center">
+              <svg className="w-4 h-4 mr-2 text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M8.5 10C9.32843 10 10 9.32843 10 8.5C10 7.67157 9.32843 7 8.5 7C7.67157 7 7 7.67157 7 8.5C7 9.32843 7.67157 10 8.5 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              Assets
+            </div>
+            <div className="flex-1">
+              <PillSelector
+                label="Assets"
+                value={assets}
+                options={mockAssets}
+                onChange={handleAssetsChangeWrapper}
+                color="pink"
+              />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-gray-500 font-medium">Template</span>
-            <PillSelector
-              label="Template"
-              value={template}
-              options={mockTemplates}
-              onChange={onTemplateChange}
-              color="purple"
-            />
+          {/* Plataforma */}
+          <div className="flex items-center">
+            <div className="w-32 text-sm text-gray-500 flex items-center">
+              <svg className="w-4 h-4 mr-2 text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 6H6C4.89543 6 4 6.89543 4 8V18C4 19.1046 4.89543 20 6 20H16C17.1046 20 18 19.1046 18 18V14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M14 4H20V10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M20 4L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Plataforma
+            </div>
+            <div className="flex-1">
+              <MultiPillSelector
+                label="Plataformas"
+                values={platform}
+                options={mockPlatforms}
+                onChange={handlePlatformChangeWrapper}
+                color="green"
+              />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-gray-500 font-medium">Cantidad de Assets</span>
-            <PillSelector
-              label="Assets"
-              value={assetCount}
-              options={[{ id: '1', name: '1' }, { id: '2', name: '2' }, { id: '3', name: '3' }, { id: '4', name: '4' }]}
-              onChange={onAssetCountChange}
-              color="pink"
-            />
+          {/* Estado */}
+          <div className="flex items-center">
+            <div className="w-32 text-sm text-gray-500 flex items-center">
+              <svg className="w-4 h-4 mr-2 text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 4V12L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
+              </svg>
+              Estado
+            </div>
+            <div className="flex-1">
+              <PillSelector
+                label="Estado"
+                value={status}
+                options={mockStatus}
+                onChange={handleStatusChangeWrapper}
+                color="purple"
+              />
+            </div>
+          </div>
+
+          {/* Creador */}
+          <div className="flex items-center">
+            <div className="w-32 text-sm text-gray-500 flex items-center">
+              <svg className="w-4 h-4 mr-2 text-gray-400" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Creador
+            </div>
+            <div className="flex-1">
+              <PillSelector
+                label="Creador"
+                value={creator}
+                options={mockCreators}
+                onChange={handleCreatorChangeWrapper}
+                color="blue"
+              />
+            </div>
+          </div>  
+        </div>
+
+        {/* Comments section */}
+        <div className="mt-8 border-t border-gray-200 pt-6">
+          <h2 className="text-gray-700 font-medium mb-3">Comments</h2>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium">
+              B
+            </div>
+            <div className="flex-1">
+              <input 
+                type="text" 
+                placeholder="Add a comment..." 
+                className="w-full px-3 py-2 rounded-md border border-gray-200 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
           </div>
         </div>
       </div>

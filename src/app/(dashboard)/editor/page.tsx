@@ -22,11 +22,39 @@ export default function EditorPage() {
   const [editorContent, setEditorContent] = useState<AIContent | null>(null);
   const [freeTextContent, setFreeTextContent] = useState<string>('');
 
+  // Estados para los selectores
   const [documentTitle, setDocumentTitle] = useState('Storyboard sin título');
   const [selectedClient, setSelectedClient] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState<string[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState('');
-  const [assetCount, setAssetCount] = useState('');
+  const [selectedAssets, setSelectedAssets] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedCreator, setSelectedCreator] = useState('');
+
+  // Handlers de cambio con logging
+  const handleClientChange = (value: string) => {
+    console.log('EditorPage - Cliente seleccionado:', value);
+    setSelectedClient(value);
+  };
+
+  const handleAssetsChange = (value: string) => {
+    console.log('EditorPage - Assets seleccionados:', value);
+    setSelectedAssets(value);
+  };
+
+  const handlePlatformChange = (values: string[]) => {
+    console.log('EditorPage - Plataformas seleccionadas:', values);
+    setSelectedPlatform(values);
+  };
+
+  const handleStatusChange = (value: string) => {
+    console.log('EditorPage - Estado seleccionado:', value);
+    setSelectedStatus(value);
+  };
+
+  const handleCreatorChange = (value: string) => {
+    console.log('EditorPage - Creador seleccionado:', value);
+    setSelectedCreator(value);
+  };
 
   if (status === 'loading') {
     return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-gray-500" /></div>;
@@ -76,8 +104,9 @@ export default function EditorPage() {
           aiContent: editorContent,
           cliente: selectedClient,
           plataforma: selectedPlatform,
-          template: selectedTemplate,
-          assets: assetCount,
+          assets: selectedAssets,
+          status: selectedStatus,
+          creator: selectedCreator,
           title: documentTitle,
         }),
       });
@@ -101,13 +130,15 @@ export default function EditorPage() {
           title={documentTitle}
           onTitleChange={setDocumentTitle}
           client={selectedClient}
-          onClientChange={setSelectedClient}
+          onClientChange={handleClientChange}
+          assets={selectedAssets}
+          onAssetsChange={handleAssetsChange}
           platform={selectedPlatform}
-          onPlatformChange={setSelectedPlatform}
-          template={selectedTemplate}
-          onTemplateChange={setSelectedTemplate}
-          assetCount={assetCount}
-          onAssetCountChange={setAssetCount}
+          onPlatformChange={handlePlatformChange}
+          status={selectedStatus}
+          onStatusChange={handleStatusChange}
+          creator={selectedCreator}
+          onCreatorChange={handleCreatorChange}
         />
 
         {error && (
@@ -121,14 +152,13 @@ export default function EditorPage() {
         )}
 
         <div className="flex-1">
-        <RichEditor
-  initialContent={editorContent || emptyAIContent}
-  onChange={(json, text) => {
-    setEditorContent(json);
-    setFreeTextContent(text || '');
-  }}
-/>
-
+          <RichEditor
+            initialContent={editorContent || emptyAIContent}
+            onChange={(json, text) => {
+              setEditorContent(json);
+              setFreeTextContent(text || '');
+            }}
+          />
         </div>
       </div>
 

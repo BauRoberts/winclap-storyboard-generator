@@ -12,7 +12,8 @@ import TextAlign from '@tiptap/extension-text-align';
 import Commands from './tiptap/slash-commands';
 import { FloatingToolbar } from './tiptap/FloatingToolbar';
 
-interface AIContent {
+// Definir claramente la interfaz AIContent
+export interface AIContent {
   objective: string;
   tone: string;
   valueProp1: string;
@@ -35,26 +36,10 @@ interface AIContent {
   [key: string]: string;
 }
 
+// Definir la interfaz para EditorJSON
 interface EditorJSON {
-    type: string;
-    content?: Array<{
-      type: string;
-      attrs?: Record<string, unknown>;
-      content?: Array<{
-        type: string;
-        text?: string;
-        attrs?: Record<string, unknown>;
-      }>;
-    }>;
-  }
-  
-
-interface RichEditorProps {
-  initialContent: AIContent;
-  onChange: (json: AIContent, text?: string) => void;
-}
-
-interface DocContent {
+  type: string;
+  content?: Array<{
     type: string;
     attrs?: Record<string, unknown>;
     content?: Array<{
@@ -62,14 +47,32 @@ interface DocContent {
       text?: string;
       attrs?: Record<string, unknown>;
     }>;
-  }
+  }>;
+}
+
+// Definir explícitamente las props que recibe RichEditor
+interface RichEditorProps {
+  initialContent: AIContent;
+  onChange: (json: AIContent, text: string) => void;
+}
+
+interface DocContent {
+  type: string;
+  attrs?: Record<string, unknown>;
+  content?: Array<{
+    type: string;
+    text?: string;
+    attrs?: Record<string, unknown>;
+  }>;
+}
 
 interface DocStructure {
   type: string;
   content: DocContent[];
 }
 
-export default function RichEditor({ initialContent, onChange }: RichEditorProps) {
+// Asegurarse de que el componente reciba las props correctamente
+const RichEditor: React.FC<RichEditorProps> = ({ initialContent, onChange }) => {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -110,14 +113,16 @@ export default function RichEditor({ initialContent, onChange }: RichEditorProps
     content: `<p></p>`, // Asegurar que el editor siempre tiene contenido editable
     editorProps: {
       attributes: {
-        class: 'prose prose-base sm:prose lg:prose-lg focus:outline-none max-w-none min-h-[calc(100vh-150px)]',
+        class: 'prose prose-base sm:prose lg:prose-lg focus:outline-none max-w-none min-h-[calc(100vh-150px)] text-sm', // Añadido text-xs para el tamaño
         contenteditable: 'true', // Asegurar que todo es editable
       },
     },
     onUpdate({ editor }) {
       const json = editor.getJSON() as EditorJSON;
       const text = editor.getText();
-      onChange?.(parseEditorContent(json), text);
+      if (onChange) {
+        onChange(parseEditorContent(json), text);
+      }
     },
   });
 
@@ -130,7 +135,7 @@ export default function RichEditor({ initialContent, onChange }: RichEditorProps
   }, [editor, initialContent]); // Agregar initialContent a las dependencias
 
   return (
-    <div className="notion-like-editor">
+    <div className="notion-like-editor mt-6"> {/* Añadido margen superior */}
       {editor && (
         <BubbleMenu 
           editor={editor} 
@@ -143,10 +148,14 @@ export default function RichEditor({ initialContent, onChange }: RichEditorProps
       <EditorContent editor={editor} />
     </div>
   );
-}
+};
 
-// Resto del código permanece igual...
+// Exportar el componente como default
+export default RichEditor;
+
+// Funciones auxiliares (mantener igual)
 function formatAsDoc(data: AIContent): DocStructure {
+  // (código existente)
   const sections = [
     {
       heading: 'Briefing Storyboard',
@@ -238,6 +247,7 @@ function formatAsDoc(data: AIContent): DocStructure {
 }
 
 function parseEditorContent(doc: EditorJSON): AIContent {
+  // (código existente)
   const text = doc.content?.flatMap((block) => {
     return block.content?.map((c) => c.text) || [];
   }).join('\n') || '';
