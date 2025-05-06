@@ -223,12 +223,6 @@ export default function EditorPage() {
     }
   };
 
-  // Monitorear cambios en los estados clave para depuración
-  useEffect(() => {
-    console.log("Modo de vista actual:", viewMode);
-    console.log("Fuente seleccionada:", selectedContentSource);
-  }, [viewMode, selectedContentSource]);
-
   // Renderizar el editor apropiado según el modo de vista
   const renderEditor = () => {
     if (viewMode === 'single') {
