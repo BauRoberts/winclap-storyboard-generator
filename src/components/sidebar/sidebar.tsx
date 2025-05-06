@@ -26,9 +26,9 @@ import {
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { data: session } = useSession(); // We'll keep this for now, might be needed later
+  const { data: _session } = useSession();
   const [isExpanded, setIsExpanded] = useState(true);
-  const [isMobile, setIsMobile] = useState(false); // We'll keep this for now, might be needed later
+  const [_isMobile, setIsMobile] = useState(false);
 
   // Check if we're on mobile
   useEffect(() => {
