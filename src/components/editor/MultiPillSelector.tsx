@@ -27,7 +27,6 @@ const colorClasses: Record<string, string> = {
 };
 
 export default function MultiPillSelector({
-  label,
   values,
   options,
   onChange = () => {}, // Valor por defecto como función vacía

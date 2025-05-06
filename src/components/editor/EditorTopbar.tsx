@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import PillSelector from './PillSelector';
 import MultiPillSelector from './MultiPillSelector';
-import { ChevronDown } from 'lucide-react';
+
 
 interface Option {
   id: string;

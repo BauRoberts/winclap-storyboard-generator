@@ -26,7 +26,6 @@ const colorClasses: Record<string, string> = {
 };
 
 export default function PillSelector({
-  label,
   value,
   options,
   onChange = () => {}, // Asignar un valor por defecto
