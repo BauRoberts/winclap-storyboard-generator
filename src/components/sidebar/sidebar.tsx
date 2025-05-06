@@ -54,7 +54,7 @@ export default function Sidebar() {
   ];
 
   const configNav = [
-    { name: 'Configuración', href: '/settings', icon: Settings },
+    { name: 'Configuración', href: '/config', icon: Settings },
   ];
 
   const isActive = (href: string) => pathname === href;
