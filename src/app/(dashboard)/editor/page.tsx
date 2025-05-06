@@ -41,6 +41,12 @@ export default function EditorPage() {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedCreator, setSelectedCreator] = useState('');
 
+  // Monitorear cambios en los estados clave para depuración
+  useEffect(() => {
+    console.log("Modo de vista actual:", viewMode);
+    console.log("Fuente seleccionada:", selectedContentSource);
+  }, [viewMode, selectedContentSource]);
+
   // Handlers de cambio con logging
   const handleClientChange = (value: string) => {
     console.log('EditorPage - Cliente seleccionado:', value);

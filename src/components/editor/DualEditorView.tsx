@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { AIContent } from '@/types/types';
 import dynamic from 'next/dynamic';
 import { ArrowLeft, Split, Columns, Check } from 'lucide-react';
