@@ -1,9 +1,8 @@
-'use client';
-
+// Actualización para src/components/editor/editor.tsx
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import CharacterCount from '@tiptap/extension-character-count';
 import Focus from '@tiptap/extension-focus';
 import Typography from '@tiptap/extension-typography';
@@ -52,7 +51,7 @@ interface EditorJSON {
 
 // Definir explícitamente las props que recibe RichEditor
 interface RichEditorProps {
-  initialContent: AIContent;
+  initialContent: AIContent | string;
   onChange: (json: AIContent, text: string) => void;
 }
 
@@ -71,11 +70,17 @@ interface DocStructure {
   content: DocContent[];
 }
 
-// Asegurarse de que el componente reciba las props correctamente
 const RichEditor: React.FC<RichEditorProps> = ({ initialContent, onChange }) => {
-  // Añadir ref para controlar inicialización
-  const contentInitialized = useRef(false);
+  // Usar un estado local para controlar cuándo se inicializa el contenido
+  const [isInitialized, setIsInitialized] = useState(false);
   const isUpdating = useRef(false);
+  const initialContentRef = useRef(initialContent);
+  const editorInstanceRef = useRef<any>(null);
+
+  // Guardar el contenido inicial en un ref para comparar cambios
+  useEffect(() => {
+    initialContentRef.current = initialContent;
+  }, [initialContent]);
 
   const editor = useEditor({
     extensions: [
@@ -114,11 +119,11 @@ const RichEditor: React.FC<RichEditorProps> = ({ initialContent, onChange }) => 
         types: ['heading', 'paragraph'],
       }),
     ],
-    content: `<p></p>`, // Asegurar que el editor siempre tiene contenido editable
+    content: `<p></p>`, // Contenido inicial vacío
     editorProps: {
       attributes: {
         class: 'prose prose-base sm:prose lg:prose-lg focus:outline-none max-w-none min-h-[calc(100vh-150px)] text-sm',
-        contenteditable: 'true', // Asegurar que todo es editable
+        contenteditable: 'true',
       },
     },
     onUpdate({ editor }) {
@@ -126,34 +131,59 @@ const RichEditor: React.FC<RichEditorProps> = ({ initialContent, onChange }) => 
       
       const json = editor.getJSON() as EditorJSON;
       const text = editor.getText();
-      if (onChange) {
+      
+      if (onChange && isInitialized) {
         onChange(parseEditorContent(json), text);
       }
     },
+    // Esto resuelve el error de SSR
+    immediatelyRender: false
   });
 
-  // Inicializar contenido solo una vez
+  // Guardar la referencia del editor
   useEffect(() => {
-    if (editor && initialContent && !contentInitialized.current) {
-      console.log("Editor recibiendo contenido inicial");
-      
-      const hasContent = Object.values(initialContent).some(val => 
-        val && typeof val === 'string' && val.trim() !== ''
-      );
-      
-      if (hasContent) {
-        isUpdating.current = true;
-        const doc = formatAsDoc(initialContent);
-        editor.commands.setContent(doc);
-        contentInitialized.current = true;
-        console.log("Contenido actualizado en editor");
-        
-        setTimeout(() => {
-          isUpdating.current = false;
-        }, 100);
-      }
+    if (editor) {
+      // Corrección: necesitamos definir el tipo de editorInstanceRef
+      // La solución es especificar el tipo correcto en la declaración del useRef
+      editorInstanceRef.current = editor;
     }
-  }, [editor, initialContent]);
+  }, [editor]);
+  // Inicializar contenido solo una vez cuando el editor está listo
+  useEffect(() => {
+    if (editor && !isInitialized) {
+      console.log("Editor inicializando con contenido: ", 
+        typeof initialContentRef.current === 'string' 
+        ? (initialContentRef.current as string).substring(0, 50) + "..." 
+        : "objeto AIContent");
+        
+      isUpdating.current = true;
+      
+      // Determinar si el contenido inicial es un string o un objeto AIContent
+      if (typeof initialContentRef.current === 'string') {
+        const strContent = initialContentRef.current as string;
+        if (strContent && strContent.trim() !== '') {
+          editor.commands.setContent(`<p>${strContent}</p>`);
+        }
+      } else {
+        // Es un objeto AIContent
+        const content = initialContentRef.current as AIContent;
+        const hasContent = Object.values(content).some(val => 
+          val && typeof val === 'string' && val.trim() !== ''
+        );
+        
+        if (hasContent) {
+          const doc = formatAsDoc(content);
+          editor.commands.setContent(doc);
+        }
+      }
+      
+      // Marcar como inicializado y permitir actualizaciones
+      setTimeout(() => {
+        isUpdating.current = false;
+        setIsInitialized(true);
+      }, 100);
+    }
+  }, [editor, isInitialized]);
 
   return (
     <div className="notion-like-editor mt-6">
@@ -174,7 +204,7 @@ const RichEditor: React.FC<RichEditorProps> = ({ initialContent, onChange }) => 
 // Exportar el componente como default
 export default RichEditor;
 
-// Funciones auxiliares (mantener igual)
+// Funciones auxiliares
 function formatAsDoc(data: AIContent): DocStructure {
   // (código existente)
   const sections = [
@@ -187,55 +217,55 @@ function formatAsDoc(data: AIContent): DocStructure {
       heading: '📋 Información General',
       level: 2,
       content: [
-        `Objetivo: ${data.objective}`,
-        `Tono: ${data.tone}`,
-        `Propuesta de Valor 1: ${data.valueProp1}`,
-        `Propuesta de Valor 2: ${data.valueProp2}`
+        `Objetivo: ${data.objective || ''}`,
+        `Tono: ${data.tone || ''}`,
+        `Propuesta de Valor 1: ${data.valueProp1 || ''}`,
+        `Propuesta de Valor 2: ${data.valueProp2 || ''}`
       ]
     },
     {
       heading: '🎬 Storyboard',
       level: 2,
       content: [
-        `Hook: ${data.hook}`,
-        `Descripción: ${data.description}`,
-        `CTA: ${data.cta}`
+        `Hook: ${data.hook || ''}`,
+        `Descripción: ${data.description || ''}`,
+        `CTA: ${data.cta || ''}`
       ]
     },
     {
       heading: 'Escena 1: Hook',
       level: 3,
       content: [
-        `Script: ${data.scene1Script}`,
-        `Visual: ${data.scene1Visual}`,
-        `Sonido: ${data.scene1Sound}`
+        `Script: ${data.scene1Script || ''}`,
+        `Visual: ${data.scene1Visual || ''}`,
+        `Sonido: ${data.scene1Sound || ''}`
       ]
     },
     {
       heading: 'Escena 2: Desarrollo',
       level: 3,
       content: [
-        `Script: ${data.scene2Script}`,
-        `Visual: ${data.scene2Visual}`,
-        `Sonido: ${data.scene2Sound}`
+        `Script: ${data.scene2Script || ''}`,
+        `Visual: ${data.scene2Visual || ''}`,
+        `Sonido: ${data.scene2Sound || ''}`
       ]
     },
     {
       heading: 'Escena 3: Desarrollo',
       level: 3,
       content: [
-        `Script: ${data.scene3Script}`,
-        `Visual: ${data.scene3Visual}`,
-        `Sonido: ${data.scene3Sound}`
+        `Script: ${data.scene3Script || ''}`,
+        `Visual: ${data.scene3Visual || ''}`,
+        `Sonido: ${data.scene3Sound || ''}`
       ]
     },
     {
       heading: 'Escena 4: CTA',
       level: 3,
       content: [
-        `Script: ${data.scene4Script}`,
-        `Visual: ${data.scene4Visual}`,
-        `Sonido: ${data.scene4Sound}`
+        `Script: ${data.scene4Script || ''}`,
+        `Visual: ${data.scene4Visual || ''}`,
+        `Sonido: ${data.scene4Sound || ''}`
       ]
     }
   ];

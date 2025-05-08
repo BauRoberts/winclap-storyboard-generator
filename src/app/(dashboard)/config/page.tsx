@@ -1,109 +1,112 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2 } from "lucide-react";
-
-// Simple template type
-type Template = {
-  id: string;
-  name: string;
-  content: string;
-  isDefault: boolean;
-};
+import { Plus, Trash2, Loader2 } from "lucide-react";
+import { getTemplates, Template, createTemplate, updateTemplate, deleteTemplate, setDefaultTemplate } from "@/services/templateService";
+import { LoadingState } from "@/components/LoadingState";
+import { ErrorState } from "@/components/ErrorState";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export default function ConfigPage() {
-  // Mock templates state
-  const [templates, setTemplates] = useState<Template[]>([
-    {
-      id: "1",
-      name: "Briefing Estándar",
-      content: "# Cliente y Objetivo\n\n...\n\n# Target Audience\n\n...\n\n# Hook Principal\n\n...\n\n# Desarrollo de Escenas\n\n...\n\n# CTA\n\n...",
-      isDefault: true,
-    },
-    {
-      id: "2",
-      name: "Minimalista",
-      content: "# Hook\n\n...\n\n# Desarrollo\n\n...\n\n# CTA\n\n...",
-      isDefault: false,
-    },
-    {
-      id: "3",
-      name: "Detallado",
-      content: "# Cliente\n\n...\n\n# Objetivo\n\n...\n\n# Target Primario\n\n...\n\n# Hook\n\n...\n\n# Escenas\n\n...\n\n# CTA\n\n...",
-      isDefault: false,
-    },
-  ]);
-
-  // Simple form state
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [newTemplate, setNewTemplate] = useState({
     name: "",
     content: "",
-    isDefault: false,
+    is_default: false,
   });
-
-  // Simple user preferences
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
 
+  // Cargar templates
+  const loadTemplates = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const data = await getTemplates();
+      setTemplates(data);
+    } catch (err) {
+      console.error('Error loading templates:', err);
+      setError('Error al cargar los templates. Por favor, intenta nuevamente.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTemplates();
+  }, []);
+
   // Handle new template submission
-  const handleAddTemplate = () => {
+  const handleAddTemplate = async () => {
     if (newTemplate.name.length < 3 || newTemplate.content.length < 10) {
       alert("El nombre debe tener al menos 3 caracteres y el contenido al menos 10 caracteres");
       return;
     }
 
-    const newTemplateObject: Template = {
-      id: (templates.length + 1).toString(),
-      name: newTemplate.name,
-      content: newTemplate.content,
-      isDefault: newTemplate.isDefault,
-    };
-
-    // If new template is default, make all others non-default
-    if (newTemplate.isDefault) {
-      setTemplates(
-        templates.map((template) => ({
-          ...template,
-          isDefault: false,
-        }))
-      );
-    }
-
-    setTemplates([...templates, newTemplateObject]);
+    setIsSaving(true);
     
-    // Reset form
-    setNewTemplate({
-      name: "",
-      content: "",
-      isDefault: false,
-    });
-
-    console.log("Template creado");
+    try {
+      await createTemplate({
+        name: newTemplate.name,
+        content: JSON.stringify({ content: newTemplate.content }),
+        is_default: newTemplate.is_default
+      });
+      
+      // Reset form
+      setNewTemplate({
+        name: "",
+        content: "",
+        is_default: false,
+      });
+      
+      await loadTemplates();
+    } catch (err) {
+      console.error('Error creating template:', err);
+      setError('Error al crear el template. Por favor, intenta nuevamente.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Handle setting a template as default
-  const setDefaultTemplate = (id: string) => {
-    setTemplates(
-      templates.map((template) => ({
-        ...template,
-        isDefault: template.id === id,
-      }))
-    );
-    
-    console.log("Template por defecto actualizado");
+  const handleSetDefaultTemplate = async (id: string) => {
+    try {
+      await setDefaultTemplate(id);
+      await loadTemplates();
+    } catch (err) {
+      console.error('Error setting default template:', err);
+      setError('Error al establecer el template por defecto. Por favor, intenta nuevamente.');
+    }
   };
 
   // Handle template deletion
-  const deleteTemplate = (id: string) => {
-    setTemplates(templates.filter((template) => template.id !== id));
-    console.log("Template eliminado");
+  const handleDeleteTemplate = async () => {
+    if (!selectedTemplate?.id) return;
+    
+    try {
+      await deleteTemplate(selectedTemplate.id);
+      await loadTemplates();
+      setIsDeleteDialogOpen(false);
+    } catch (err) {
+      console.error('Error deleting template:', err);
+      setError('Error al eliminar el template. Por favor, intenta nuevamente.');
+    }
   };
+
+  if (isLoading) return <LoadingState />;
+  if (error) return <ErrorState message={error} retry={loadTemplates} />;
 
   return (
     <div className="container mx-auto py-8 px-8">
@@ -125,40 +128,49 @@ export default function ConfigPage() {
               {/* Template List */}
               <div className="space-y-4 mb-8">
                 <h3 className="font-medium text-sm">Templates Disponibles</h3>
-                <div className="border rounded-md divide-y">
-                  {templates.map((template) => (
-                    <div key={template.id} className="p-5 flex items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <span className="font-medium text-sm">{template.name}</span>
-                        {template.isDefault && (
-                          <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                            Default
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {!template.isDefault && (
+                {templates.length === 0 ? (
+                  <div className="p-4 border rounded-md text-center text-gray-500">
+                    No hay templates disponibles. Crea uno nuevo abajo.
+                  </div>
+                ) : (
+                  <div className="border rounded-md divide-y">
+                    {templates.map((template) => (
+                      <div key={template.id} className="p-5 flex items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <span className="font-medium text-sm">{template.name}</span>
+                          {template.is_default && (
+                            <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {!template.is_default && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSetDefaultTemplate(template.id!)}
+                              className="text-sm"
+                            >
+                              Definir como default
+                            </Button>
+                          )}
                           <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setDefaultTemplate(template.id)}
-                            className="text-sm"
+                            variant="ghost"
+                            size="icon"
+                            disabled={template.is_default}
+                            onClick={() => {
+                              setSelectedTemplate(template);
+                              setIsDeleteDialogOpen(true);
+                            }}
                           >
-                            Definir como default
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={template.isDefault}
-                          onClick={() => deleteTemplate(template.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* New Template Form */}
@@ -193,9 +205,9 @@ export default function ConfigPage() {
                     <input 
                       type="checkbox" 
                       id="isDefault" 
-                      checked={newTemplate.isDefault}
+                      checked={newTemplate.is_default}
                       onChange={(e) => 
-                        setNewTemplate({...newTemplate, isDefault: e.target.checked})
+                        setNewTemplate({...newTemplate, is_default: e.target.checked})
                       }
                       className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                     />
@@ -209,9 +221,19 @@ export default function ConfigPage() {
                   <Button 
                     onClick={handleAddTemplate}
                     className="w-fit text-sm"
+                    disabled={isSaving}
                   >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Agregar Template
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Agregar Template
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -273,6 +295,26 @@ export default function ConfigPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Eliminación</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que deseas eliminar el template "{selectedTemplate?.name}"? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteTemplate}>
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

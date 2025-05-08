@@ -8,12 +8,16 @@ import { Loader2, FileText, ArrowLeft, ExternalLink, Copy, Check } from 'lucide-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { getStoryboard } from '@/services/storyboardService';
+import { LoadingState } from '@/components/LoadingState';
 
 export default function ResultPage() {
   const { status } = useSession();
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  
   interface Storyboard {
     url?: string;
     aiContent?: {
@@ -23,15 +27,25 @@ export default function ResultPage() {
       cta: string;
       // ... otras propiedades según necesites
     };
+    storyboardId?: string;
+    title?: string;
     // otras propiedades que necesites
   }
+  
   const [storyboard, setStoryboard] = useState<Storyboard | null>(null);
+  const [storyboardId, setStoryboardId] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('storyboardResult');
     if (saved) {
       try {
-        setStoryboard(JSON.parse(saved));
+        const result = JSON.parse(saved);
+        setStoryboard(result);
+        
+        // Si hay un ID de storyboard, guardarlo
+        if (result.storyboardId) {
+          setStoryboardId(result.storyboardId);
+        }
       } catch {
         setError('No se pudo cargar el storyboard generado.');
       }
@@ -39,6 +53,31 @@ export default function ResultPage() {
       setError('No se encontró información del storyboard. Volvé a generar uno.');
     }
   }, []);
+  
+  // Si hay un ID de storyboard pero no hay datos, intentar cargarlos desde Supabase
+  useEffect(() => {
+    const fetchStoryboardData = async () => {
+      if (storyboardId && (!storyboard || !storyboard.url)) {
+        setIsLoading(true);
+        try {
+          const data = await getStoryboard(storyboardId);
+          setStoryboard({
+            url: data.slides_url ?? undefined,
+            aiContent: data.ai_content,
+            storyboardId: data.id,
+            title: data.title
+          });
+        } catch (err) {
+          console.error('Error loading storyboard:', err);
+          setError('Error al cargar los datos del storyboard.');
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    fetchStoryboardData();
+  }, [storyboardId, storyboard]);
 
   useEffect(() => {
     if (copied) {
@@ -49,12 +88,8 @@ export default function ResultPage() {
 
   const url = storyboard?.url;
 
-  if (status === 'loading') {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
-    );
+  if (status === 'loading' || isLoading) {
+    return <LoadingState />;
   }
 
   if (status === 'unauthenticated') {
@@ -92,7 +127,7 @@ export default function ResultPage() {
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Storyboard Listo
+              {storyboard?.title || 'Storyboard Listo'}
             </CardTitle>
             <CardDescription>
               El storyboard ha sido generado en Google Slides

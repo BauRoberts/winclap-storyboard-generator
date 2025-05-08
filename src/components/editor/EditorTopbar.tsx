@@ -3,7 +3,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import PillSelector from './PillSelector';
 import MultiPillSelector from './MultiPillSelector';
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ClientForm } from '@/components/forms/ClientForm';
+import { getClients } from '@/services/clientService';
+import { getCreators } from '@/services/creatorService';
 
 interface Option {
   id: string;
@@ -25,12 +28,12 @@ interface EditorTopbarProps {
   onCreatorChange: (creator: string) => void;
 }
 
-const mockClients: Option[] = [
-  { id: 'cliente1', name: 'Coca Cola' },
-  { id: 'cliente2', name: 'Pepsi' },
-  { id: 'cliente3', name: 'Nike' },
-  { id: 'cliente4', name: 'Adidas' },
-  { id: 'cliente5', name: 'Samsung' },
+const mockAssets: Option[] = [
+  { id: '1', name: '1' }, 
+  { id: '2', name: '2' }, 
+  { id: '3', name: '3' }, 
+  { id: '4', name: '4' },
+  { id: '5', name: '5' },
 ];
 
 const mockPlatforms: Option[] = [
@@ -40,26 +43,11 @@ const mockPlatforms: Option[] = [
   { id: 'meta', name: 'Meta' },
 ];
 
-const mockAssets: Option[] = [
-  { id: '1', name: '1' }, 
-  { id: '2', name: '2' }, 
-  { id: '3', name: '3' }, 
-  { id: '4', name: '4' },
-  { id: '5', name: '5' },
-];
-
 const mockStatus: Option[] = [
   { id: 'not_started', name: 'Not started' },
   { id: 'in_progress', name: 'In progress' },
   { id: 'review', name: 'In review' },
   { id: 'done', name: 'Done' },
-];
-
-const mockCreators: Option[] = [
-  { id: 'user1', name: 'Ana García' },
-  { id: 'user2', name: 'Juan Pérez' },
-  { id: 'user3', name: 'Elena López' },
-  { id: 'user4', name: 'Carlos Ruiz' },
 ];
 
 export default function EditorTopbar({
@@ -80,10 +68,50 @@ export default function EditorTopbar({
   const [titleValue, setTitleValue] = useState(title);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Estados para los datos
+  const [clients, setClients] = useState<Option[]>([]);
+  const [creators, setCreators] = useState<Option[]>([]);
+  const [isLoadingClients, setIsLoadingClients] = useState(false);
+  const [isLoadingCreators, setIsLoadingCreators] = useState(false);
+  
+  // Estados para los diálogos
+  const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
+
+  // Cargar clientes
+  const loadClients = async () => {
+    setIsLoadingClients(true);
+    try {
+      const data = await getClients();
+      setClients(data.map(client => ({ id: client.id!, name: client.name })));
+    } catch (error) {
+      console.error('Error loading clients:', error);
+    } finally {
+      setIsLoadingClients(false);
+    }
+  };
+
+  // Cargar creadores
+  const loadCreators = async () => {
+    setIsLoadingCreators(true);
+    try {
+      const data = await getCreators();
+      setCreators(data.map(creator => ({ id: creator.id!, name: creator.name })));
+    } catch (error) {
+      console.error('Error loading creators:', error);
+    } finally {
+      setIsLoadingCreators(false);
+    }
+  };
+
+  // Cargar datos cuando el componente se monta
+  useEffect(() => {
+    loadClients();
+    loadCreators();
+  }, []);
 
   // Handlers para PillSelector con verificación
   const handleClientChangeWrapper = (newClient: string) => {
-    console.log('EditorTopbar - Cliente seleccionado:', newClient);
     if (typeof onClientChange === 'function') {
       onClientChange(newClient);
     } else {
@@ -91,8 +119,12 @@ export default function EditorTopbar({
     }
   };
 
+  const handleClientAdded = () => {
+    loadClients();
+    setIsClientDialogOpen(false);
+  };
+
   const handleAssetsChangeWrapper = (newAssets: string) => {
-    console.log('EditorTopbar - Assets seleccionados:', newAssets);
     if (typeof onAssetsChange === 'function') {
       onAssetsChange(newAssets);
     } else {
@@ -101,7 +133,6 @@ export default function EditorTopbar({
   };
 
   const handleStatusChangeWrapper = (newStatus: string) => {
-    console.log('EditorTopbar - Estado seleccionado:', newStatus);
     if (typeof onStatusChange === 'function') {
       onStatusChange(newStatus);
     } else {
@@ -110,7 +141,6 @@ export default function EditorTopbar({
   };
 
   const handleCreatorChangeWrapper = (newCreator: string) => {
-    console.log('EditorTopbar - Creador seleccionado:', newCreator);
     if (typeof onCreatorChange === 'function') {
       onCreatorChange(newCreator);
     } else {
@@ -120,7 +150,6 @@ export default function EditorTopbar({
 
   // Handler para MultiPillSelector
   const handlePlatformChangeWrapper = (newPlatform: string[]) => {
-    console.log('EditorTopbar - Plataformas seleccionadas:', newPlatform);
     if (typeof onPlatformChange === 'function') {
       onPlatformChange(newPlatform);
     } else {
@@ -170,13 +199,6 @@ export default function EditorTopbar({
     };
   }, [isEditing, titleValue, handleTitleBlur]);
 
-  // Para depuración - mostrar las props recibidas
-  useEffect(() => {
-    console.log('EditorTopbar - Props recibidas:', {
-      client, assets, platform, status, creator
-    });
-  }, [client, assets, platform, status, creator]);
-
   return (
     <div className="editor-topbar py-6 px-6">
       <div className="max-w-4xl mx-auto">
@@ -218,9 +240,11 @@ export default function EditorTopbar({
               <PillSelector
                 label="Cliente"
                 value={client}
-                options={mockClients}
+                options={clients}
                 onChange={handleClientChangeWrapper}
                 color="blue"
+                isLoading={isLoadingClients}
+                onAddNew={() => setIsClientDialogOpen(true)}
               />
             </div>
           </div>
@@ -299,9 +323,10 @@ export default function EditorTopbar({
               <PillSelector
                 label="Creador"
                 value={creator}
-                options={mockCreators}
+                options={creators}
                 onChange={handleCreatorChangeWrapper}
                 color="blue"
+                isLoading={isLoadingCreators}
               />
             </div>
           </div>  
@@ -324,6 +349,22 @@ export default function EditorTopbar({
           </div>
         </div>
       </div>
+
+      {/* Client Form Dialog */}
+      <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Crear Nuevo Cliente</DialogTitle>
+            <DialogDescription>
+              Completa los detalles del cliente a continuación.
+            </DialogDescription>
+          </DialogHeader>
+          <ClientForm 
+            onSuccess={handleClientAdded} 
+            onCancel={() => setIsClientDialogOpen(false)} 
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

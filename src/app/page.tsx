@@ -6,6 +6,8 @@ import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 
+
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -44,6 +46,7 @@ export default function Home() {
               Plataforma de generación de storyboards
             </CardDescription>
           </CardHeader>
+          
 
           <CardContent className="pt-4">
             <div className="relative mb-6">

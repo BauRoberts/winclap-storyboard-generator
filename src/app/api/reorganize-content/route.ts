@@ -1,6 +1,8 @@
+// src/app/api/reorganize-content/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { generateStoryboardContent } from '@/lib/anthropicService';
-
+import { updateStoryboard } from '@/services/storyboardService';
+import { supabase } from '@/lib/supabase'; // Añadir esta importación
 
 function createReorganizePrompt(text: string): string {
   return `
@@ -16,7 +18,7 @@ Tu tarea es analizar este texto y extraer información para organizarla en un fo
 
 Si el texto no contiene información específica sobre algún campo, usa tu experiencia para inferir valores apropiados basados en el contexto.
 
-Responde EXCLUSIVAMENTE en formato JSON con la siguiente estructura exacta, sin texto introductorio ni explicaciones adicionales:
+Responde EXCLUSIVAMENTE en formato JSON con la siguiente estructura exacta:
 
 {
   "objective": "objetivo refinado de la campaña",
@@ -40,28 +42,88 @@ Responde EXCLUSIVAMENTE en formato JSON con la siguiente estructura exacta, sin 
   "scene4Visual": "descripción visual detallada del call to action"
 }
 
-Asegúrate de que todo el contenido sea creativo, específico y optimizado para video en redes sociales.
-  `;
+Tu respuesta DEBE ser un objeto JSON válido sin comentarios adicionales, texto introductorio o texto de cierre.
+Solo devuelve el objeto JSON puro, sin rodeos ni explicaciones.
+`;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { text } = await request.json();
+    console.log('Recibida solicitud de reorganización de contenido');
+    
+    const body = await request.json();
+    console.log('Body recibido:', JSON.stringify(body, null, 2).substring(0, 200) + '...');
+    
+    const { text, storyboardId } = body;
     
     if (!text || typeof text !== 'string') {
+      console.error('Error: Texto inválido o vacío');
       return NextResponse.json({ 
         success: false, 
-        error: 'Texto inválido' 
+        error: 'Texto inválido o vacío' 
       }, { status: 400 });
     }
 
-    const prompt = createReorganizePrompt(text);
-    const aiContent = await generateStoryboardContent(prompt);
+    console.log(`Procesando texto de ${text.length} caracteres para storyboard ID: ${storyboardId || 'nuevo'}`);
 
-    return NextResponse.json({ success: true, aiContent });
+    // Generar el contenido AI
+    try {
+      const prompt = createReorganizePrompt(text);
+      console.log('Prompt generado, enviando a generateStoryboardContent');
+      
+      const aiContent = await generateStoryboardContent(prompt);
+      console.log('Contenido AI generado exitosamente');
+      
+      // Si se proporcionó un ID de storyboard, actualizarlo con el contenido AI
+      if (storyboardId) {
+        console.log(`Actualizando storyboard ${storyboardId} con contenido AI`);
+        try {
+          // Intentar hacer una consulta para verificar que la tabla tiene la estructura correcta
+          const { data: tableInfo, error: tableError } = await supabase
+            .from('storyboard_ai_content')
+            .select('id')
+            .limit(1);
+            
+          if (tableError) {
+            console.error('Error al verificar la tabla storyboard_ai_content:', tableError);
+            // No continuar con la actualización
+            return NextResponse.json({ 
+              success: true, 
+              aiContent,
+              warning: 'No se pudo guardar el contenido en la base de datos debido a un error en la estructura de la tabla'
+            });
+          }
+          
+          await updateStoryboard(storyboardId, {}, aiContent);
+          console.log('Storyboard actualizado exitosamente');
+        } catch (updateError) {
+          console.error('Error al actualizar el storyboard:', updateError);
+          // Devolver el contenido pero con una advertencia
+          return NextResponse.json({ 
+            success: true, 
+            aiContent,
+            warning: 'Se generó el contenido pero no se pudo guardar en la base de datos'
+          });
+        }
+      }
+
+      return NextResponse.json({ 
+        success: true, 
+        aiContent 
+      });
+    } catch (aiError) {
+      console.error('Error en la generación de contenido AI:', aiError);
+      return NextResponse.json({ 
+        success: false, 
+        error: aiError instanceof Error ? aiError.message : 'Error en el procesamiento de IA' 
+      }, { status: 500 });
+    }
   } catch (error) {
-    console.error('Error al reorganizar contenido:', error);
+    console.error('Error general al reorganizar contenido:', error);
     const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      error: errorMessage 
+    }, { status: 500 });
   }
 }

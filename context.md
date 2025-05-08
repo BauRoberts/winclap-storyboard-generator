@@ -79,40 +79,63 @@ El objetivo es automatizar ese proceso, generando propuestas creativas en base a
 ## 📁 Repository Structure (Actualizada)
 
 ```
-winclap-storyboard-generator/
-├── src/
-│   ├── app/
-│   │   ├── (dashboard)/
-│   │   │   ├── editor/          # Página de editor tipo Notion
-│   │   │   ├── result/          # Visualización del link final
-│   │   │   ├── clients/         # Gestión de clientes
-│   │   │   ├── storyboards/     # Listado de storyboards
-│   │   │   └── layout.tsx       # Layout con sidebar para páginas autenticadas
-│   │   ├── api/
-│   │   │   ├── reorganize-content/ # API para estructurar texto
-│   │   │   ├── generate-slides/    # Generación de deck en Slides
-│   │   │   └── auth/              # NextAuth (Google OAuth)
-│   │   ├── globals.css          # Estilos globales + editor
-│   │   └── layout.tsx
-│   ├── lib/
-│   │   ├── anthropicService.ts  # Interfaz con Claude
-│   │   ├── googleApi.ts         # Lógica de duplicación y reemplazo
-│   │   └── utils/               # createPrompt, helpers, mappers
-│   ├── components/
-│   │   ├── ui/                  # Componentes UI reutilizables
-│   │   ├── sidebar/
-│   │   │   └── sidebar.tsx      # Componente de navegación lateral
-│   │   ├── editor/
-│   │   │   ├── editor.tsx       # Componente principal Tiptap
-│   │   │   ├── EditorTopbar.tsx # Barra superior estilo Notion
-│   │   │   ├── FloatingButtons.tsx # Botones de acción flotantes
-│   │   │   ├── FloatingToolbar.tsx # Toolbar flotante para formato
-│   │   │   └── tiptap/
-│   │   │       ├── slash-commands.ts   # Comandos de barra diagonal
-│   │   │       └── CommandsList.tsx    # UI para comando
-│   │   └── navbar.tsx           # Navegación global (legacy)
-│   └── types/                   # Interfaces y tipos
-└── README.md
+bautistaroberts@Bautistas-MacBook-Pro winclap-storyboard-generator % tree -I "node_modules|.next|.git|public|.vscode|.DS_Store" -L 3
+.
+├── commands.md
+├── components.json
+├── context.md
+├── credentials.json
+├── eslint.config.mjs
+├── next-env.d.ts
+├── next.config.ts
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── README.md
+├── scripts
+│   └── seed_data.sql
+├── seed-script.js
+├── src
+│   ├── app
+│   │   ├── (dashboard)
+│   │   ├── api
+│   │   ├── favicon.ico
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── providers.tsx
+│   ├── components
+│   │   ├── editor
+│   │   ├── ErrorState.tsx
+│   │   ├── forms
+│   │   ├── LoadingState.tsx
+│   │   ├── navbar.tsx
+│   │   ├── sidebar
+│   │   ├── SupabaseTest.tsx
+│   │   ├── topbar
+│   │   └── ui
+│   ├── hooks
+│   │   └── useSupabase.ts
+│   ├── lib
+│   │   ├── anthropicService.ts
+│   │   ├── constants.ts
+│   │   ├── googleApi.ts
+│   │   ├── supabase.ts
+│   │   └── utils.ts
+│   ├── middleware.ts
+│   ├── services
+│   │   ├── clientService.ts
+│   │   ├── creatorService.ts
+│   │   ├── storyboardService.ts
+│   │   └── templateService.ts
+│   └── types
+│       ├── next-auth.d.ts
+│       └── types.ts
+├── tailwind.config.js
+└── tsconfig.json
+
+16 directories, 37 files
+bautistaroberts@Bautistas-MacBook-Pro winclap-storyboard-generator % 
 ```
 
 ## 📦 Prompt IA Actualizado

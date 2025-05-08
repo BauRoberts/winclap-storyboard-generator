@@ -1,6 +1,7 @@
+//src/components/editor/PillSelector.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -13,8 +14,10 @@ interface PillSelectorProps {
   label: string;
   value: string;
   options: Option[];
-  onChange?: (value: string) => void; // Hacer onChange opcional con ?
+  onChange?: (value: string) => void;
   color?: 'blue' | 'green' | 'purple' | 'pink';
+  isLoading?: boolean;
+  onAddNew?: () => void;
 }
 
 const colorClasses: Record<string, string> = {
@@ -28,29 +31,40 @@ const colorClasses: Record<string, string> = {
 export default function PillSelector({
   value,
   options,
-  onChange = () => {}, // Asignar un valor por defecto
+  onChange = () => {},
   color = 'blue',
+  isLoading = false,
+  onAddNew,
 }: PillSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const selected = options.find(opt => opt.id === value);
   const styleClass = selected ? colorClasses[color] : colorClasses.default;
 
   const handleSelect = (optionId: string) => {
-    console.log(`PillSelector - Selected option: ${optionId}`);
-    
-    // Verificar explícitamente si onChange es una función
     if (typeof onChange === 'function') {
       try {
         onChange(optionId);
       } catch (e) {
         console.error('Error calling onChange:', e);
       }
-    } else {
-      console.warn('onChange is not a function:', onChange);
     }
     
     setIsOpen(false);
   };
+
+  // Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isOpen) {
+        setIsOpen(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
 
   return (
     <div className="relative">
@@ -59,25 +73,51 @@ export default function PillSelector({
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'inline-flex items-center px-2 py-1 rounded text-xs cursor-pointer transition-colors',
+          isLoading ? 'opacity-50 cursor-not-allowed' : '',
           selected ? `${styleClass} bg-opacity-90` : styleClass
         )}
       >
-        {selected ? selected.name : `Empty`}
-        <ChevronDown className="h-3 w-3 ml-1 opacity-70" />
+        {isLoading ? (
+          'Cargando...'
+        ) : (
+          <>
+            {selected ? selected.name : `Empty`}
+            <ChevronDown className="h-3 w-3 ml-1 opacity-70" />
+          </>
+        )}
       </div>
 
       {/* Dropdown menu */}
-      {isOpen && (
+      {isOpen && !isLoading && (
         <div className="absolute z-50 mt-1 min-w-[180px] bg-white border border-gray-200 shadow-lg rounded-md overflow-hidden">
           {options.map(option => (
             <div
               key={option.id}
               className="text-xs py-1.5 px-2 cursor-pointer hover:bg-gray-100"
-              onClick={() => handleSelect(option.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSelect(option.id);
+              }}
             >
               {option.name}
             </div>
           ))}
+          
+          {onAddNew && (
+            <>
+              <div className="border-t border-gray-100 my-1"></div>
+              <div
+                className="text-xs py-1.5 px-2 cursor-pointer hover:bg-gray-100 text-blue-600"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsOpen(false);
+                  onAddNew();
+                }}
+              >
+                + Crear nuevo
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

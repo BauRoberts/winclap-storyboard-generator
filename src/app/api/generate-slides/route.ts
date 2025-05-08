@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/options';
 import { generateStoryboard } from '@/lib/googleApi';
+import { updateStoryboardSlides, getStoryboard } from '@/services/storyboardService';
 
 interface AIContent {
   objective: string;
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { aiContent } = await request.json();
+    const { aiContent, storyboardId, cliente, title } = await request.json();
 
     // Validar campos requeridos
     const missingFields = validateRequiredFields(aiContent);
@@ -99,18 +100,25 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Extraer cliente del contenido
-    const cliente = extractClientFromContent(aiContent);
-    aiContent.cliente = cliente;
+    // Extraer cliente del contenido o usar el proporcionado
+    const clienteNombre = cliente || extractClientFromContent(aiContent);
+    aiContent.cliente = clienteNombre;
 
-    // Generar storyboard
+    // Generar storyboard en Google Slides
     const result = await generateStoryboard(session.accessToken, aiContent);
+    
+    // Si hay un storyboardId, actualizar el registro con la URL y el ID de la presentación
+    if (storyboardId) {
+      await updateStoryboardSlides(storyboardId, result.url, result.id);
+    }
 
     return NextResponse.json({
       success: true,
       url: result.url,
       presentationId: result.id,
-      aiContent
+      aiContent,
+      storyboardId,
+      title
     });
   } catch (error) {
     console.error('Error al generar Slides:', error);

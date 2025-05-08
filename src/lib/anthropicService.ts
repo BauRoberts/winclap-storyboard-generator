@@ -1,11 +1,17 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
+// Configuración con validación de API key
+const apiKey = process.env.ANTHROPIC_API_KEY;
+if (!apiKey) {
+  console.error('ANTHROPIC_API_KEY no está configurada en las variables de entorno');
+}
+
+export const anthropicClient = new Anthropic({
+  apiKey: apiKey || 'dummy-key' // Evita error en tiempo de compilación si la key no existe
 });
 
 // Definir la interfaz para el contenido generado
-interface StoryboardContent {
+export interface StoryboardContent {
   objective: string;
   tone: string;
   valueProp1: string;
@@ -30,8 +36,15 @@ interface StoryboardContent {
 
 export async function generateStoryboardContent(prompt: string): Promise<StoryboardContent> {
   try {
-    const message = await anthropic.messages.create({
-      model: "claude-3-opus-20240229",
+    // Verificar que tenemos una API key válida
+    if (!apiKey) {
+      throw new Error('ANTHROPIC_API_KEY no está configurada');
+    }
+
+    console.log('Enviando prompt a Anthropic:', prompt.substring(0, 100) + '...');
+    
+    const message = await anthropicClient.messages.create({
+      model: "claude-3-sonnet-20240229", // Cambiado a Sonnet por ser más equilibrado
       max_tokens: 4000,
       messages: [
         {
@@ -43,6 +56,8 @@ export async function generateStoryboardContent(prompt: string): Promise<Storybo
       system: "Eres un experto en marketing digital y creación de storyboards para redes sociales. Tu tarea es generar contenido estructurado para un storyboard basado en el brief del usuario. Debes responder ÚNICAMENTE en formato JSON."
     });
 
+    console.log('Respuesta recibida de Anthropic');
+    
     // Convertir la respuesta a string para procesarla
     let contentText = '';
     
@@ -55,24 +70,72 @@ export async function generateStoryboardContent(prompt: string): Promise<Storybo
       }
     }
 
-    // Intentar extraer el JSON
+    console.log('Contenido de texto extraído:', contentText.substring(0, 100) + '...');
+
+    // Intentar extraer el JSON con mejor manejo de errores
     try {
-      // Remover posibles etiquetas de formato
-      const cleanedContent = contentText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      return JSON.parse(cleanedContent);
-    } catch {
-      // Si no se puede parsear directamente, intentar extraer el JSON de la respuesta
-      const jsonMatch = contentText.match(/```json\n?([\s\S]*?)\n?```/) || 
-                        contentText.match(/{[\s\S]*}/);
+      // Limpiar el texto para mejorar las posibilidades de parseo
+      let jsonString = contentText;
       
+      // Quitar markdown si existe
+      jsonString = jsonString.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      
+      // Intentar extraer el objeto JSON
+      const jsonMatch = jsonString.match(/{[\s\S]*}/);
       if (jsonMatch) {
-        const jsonContent = jsonMatch[1] || jsonMatch[0];
-        return JSON.parse(jsonContent);
+        jsonString = jsonMatch[0];
       }
       
-      // Si no podemos extraer JSON, lanzar error
-      console.error('No se pudo extraer JSON de la respuesta:', contentText);
-      throw new Error('No se pudo parsear la respuesta de IA');
+      console.log('JSON a parsear:', jsonString.substring(0, 100) + '...');
+      
+      // Parsear el JSON
+      const parsedContent = JSON.parse(jsonString);
+      
+      // Verificar que es un objeto
+      if (typeof parsedContent !== 'object' || parsedContent === null) {
+        throw new Error('La respuesta no es un objeto JSON válido');
+      }
+      
+      // Verificar campos requeridos
+      const requiredFields = ['objective', 'hook', 'cta'];
+      const missingFields = requiredFields.filter(field => 
+        !parsedContent[field] || typeof parsedContent[field] !== 'string' || !parsedContent[field].trim()
+      );
+      
+      if (missingFields.length > 0) {
+        throw new Error(`Faltan campos requeridos en la respuesta: ${missingFields.join(', ')}`);
+      }
+      
+      return parsedContent as StoryboardContent;
+    } catch (parseError) {
+      console.error('Error al parsear JSON:', parseError);
+      console.error('Contenido que causó el error:', contentText);
+      
+      // Crear un objeto mínimo con lo que podamos extraer
+      // Este es un fallback para no romper la aplicación
+      const fallbackContent: StoryboardContent = {
+        objective: "Error al procesar la respuesta - vuelve a intentarlo",
+        tone: "",
+        valueProp1: "",
+        valueProp2: "",
+        hook: "Error de procesamiento",
+        description: `No se pudo extraer el contenido correctamente. Error: ${parseError instanceof Error ? parseError.message : 'Desconocido'}`,
+        cta: "",
+        scene1Script: "",
+        scene1Visual: "",
+        scene1Sound: "",
+        scene2Script: "",
+        scene2Visual: "",
+        scene2Sound: "",
+        scene3Script: "",
+        scene3Visual: "",
+        scene3Sound: "",
+        scene4Script: "",
+        scene4Visual: "",
+        scene4Sound: ""
+      };
+      
+      throw new Error(`Error al parsear la respuesta de la IA: ${parseError instanceof Error ? parseError.message : 'Error desconocido'}`);
     }
   } catch (error) {
     console.error('Error al generar contenido con Anthropic:', error);
