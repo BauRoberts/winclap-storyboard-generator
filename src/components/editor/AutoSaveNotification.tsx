@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Loader2, Check, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -18,39 +18,40 @@ const AutoSaveNotification: React.FC<AutoSaveNotificationProps> = ({
 }) => {
   // Estado para controlar la animación de desaparición
   const [visible, setVisible] = useState(status !== 'idle');
-  const [hideTimeout, setHideTimeout] = useState<NodeJS.Timeout | null>(null);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Efecto para manejar la visibilidad basado en el estado
   useEffect(() => {
-    const timeout = hideTimeout;
-  
-    if (timeout) {
-      clearTimeout(timeout);
-      setHideTimeout(null);
+    const currentTimeout = hideTimeoutRef.current;
+    if (currentTimeout) {
+      clearTimeout(currentTimeout);
+      hideTimeoutRef.current = null;
     }
   
     if (status !== 'idle') {
       setVisible(true);
   
       if (status === 'saved') {
-        const t = setTimeout(() => {
+        const timeout = setTimeout(() => {
           setVisible(false);
         }, 3000);
-        setHideTimeout(t);
+        hideTimeoutRef.current = timeout;
       }
     } else {
-      const t = setTimeout(() => {
+      const timeout = setTimeout(() => {
         setVisible(false);
       }, 300);
-      setHideTimeout(t);
+      hideTimeoutRef.current = timeout;
     }
   
     return () => {
-      if (timeout) {
-        clearTimeout(timeout);
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
       }
     };
-  }, [status, hideTimeout]); 
+  }, [status]); // ✅ Solo `status` como dependencia, tamaño constante
+  
+  
   
 
   // No renderizar nada si estamos en estado 'idle' y no visible
