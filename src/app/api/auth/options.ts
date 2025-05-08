@@ -164,7 +164,6 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/',
-    error: '/auth-error', // Página personalizada para errores (crear esta página)
   },
   debug: process.env.NODE_ENV === 'development',
 };
