@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Wand2, Sparkles, Loader2, Save, Check, AlertCircle } from 'lucide-react';
+import { Sparkles, Loader2, Save, Check, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -13,35 +13,31 @@ import {
 
 interface FloatingButtonsProps {
   onReorganize: () => Promise<void>;
-  onGenerate: () => Promise<void>;
   onSave?: () => Promise<void>;
   isReorganizing: boolean;
-  isGenerating: boolean;
   isSaving?: boolean;
   charactersCount: number;
   disabled?: {
     reorganize?: boolean;
-    generate?: boolean;
     save?: boolean;
   };
-  viewMode?: 'single' | 'dual';
-  // Nuevas props para autoguardado
   autoSaveStatus?: 'idle' | 'saving' | 'saved' | 'error';
   lastSaved?: Date | null;
+  // Nueva prop para controlar si mostrar el botón guardar
+  showSaveButton?: boolean;
 }
 
 export default function FloatingButtons({
   onReorganize,
-  onGenerate,
   onSave,
   isReorganizing,
-  isGenerating,
   isSaving = false,
   charactersCount,
   disabled = {},
-  viewMode = 'single',
   autoSaveStatus = 'idle',
-  lastSaved = null
+  lastSaved = null,
+  // Por defecto, no mostramos el botón de guardar ya que tenemos autoguardado
+  showSaveButton = false
 }: FloatingButtonsProps) {
   // Estado para mostrar info sobre caracteres
   const [showCharCount, setShowCharCount] = useState(false);
@@ -94,8 +90,8 @@ export default function FloatingButtons({
         </div>
       )}
       
-      {/* Botón para guardar - visible en ambos modos */}
-      {onSave && (
+      {/* Botón para guardar (solo se muestra si showSaveButton es true) */}
+      {showSaveButton && onSave && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -122,70 +118,39 @@ export default function FloatingButtons({
               </div>
             </TooltipTrigger>
             <TooltipContent side="left">
-              <p>Guardar sin generar Slides</p>
+              <p>Guardar manualmente</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       )}
       
-      {/* Botón para reorganizar - solo visible en modo single */}
-      {viewMode === 'single' && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={onReorganize}
-                disabled={isReorganizing || disabled.reorganize}
-                className="bg-purple-600 text-white hover:bg-purple-700 shadow-lg transition-transform hover:scale-105"
-                size="default"
-                onMouseOver={() => setShowCharCount(true)}
-                onMouseLeave={() => setShowCharCount(false)}
-              >
-                {isReorganizing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Reorganizando...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Reorganizar con IA
-                  </>
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="left">
-              <p>Ordena tu texto con IA</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
-
-      {/* Botón para generar storyboard - visible en ambos modos */}
+      {/* Botón para reorganizar */}
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              onClick={onGenerate}
-              disabled={isGenerating || disabled.generate}
+              onClick={onReorganize}
+              disabled={isReorganizing || disabled.reorganize}
               className="bg-black text-white hover:bg-gray-800 shadow-lg transition-transform hover:scale-105"
               size="default"
+              onMouseOver={() => setShowCharCount(true)}
+              onMouseLeave={() => setShowCharCount(false)}
             >
-              {isGenerating ? (
+              {isReorganizing ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Generando...
+                  Reorganizando...
                 </>
               ) : (
                 <>
-                  <Wand2 className="h-4 w-4 mr-2" />
-                  Generar Storyboard
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Reorganizar con IA
                 </>
               )}
             </Button>
           </TooltipTrigger>
           <TooltipContent side="left">
-            <p>Genera el storyboard en Google Slides</p>
+            <p>Estructurar tu texto y preparar para slides</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

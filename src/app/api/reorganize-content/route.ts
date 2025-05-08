@@ -2,7 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateStoryboardContent } from '@/lib/anthropicService';
 import { updateStoryboard } from '@/services/storyboardService';
-import { supabase } from '@/lib/supabase'; // Añadir esta importación
+import { supabase } from '@/lib/supabase';
+import { convertObjectKeysToSnakeCase } from '@/lib/utils';
 
 function createReorganizePrompt(text: string): string {
   return `
@@ -77,32 +78,31 @@ export async function POST(request: NextRequest) {
       // Si se proporcionó un ID de storyboard, actualizarlo con el contenido AI
       if (storyboardId) {
         console.log(`Actualizando storyboard ${storyboardId} con contenido AI`);
+        
         try {
-          // Intentar hacer una consulta para verificar que la tabla tiene la estructura correcta
-          const { data: tableInfo, error: tableError } = await supabase
-            .from('storyboard_ai_content')
-            .select('id')
-            .limit(1);
-            
-          if (tableError) {
-            console.error('Error al verificar la tabla storyboard_ai_content:', tableError);
-            // No continuar con la actualización
-            return NextResponse.json({ 
-              success: true, 
-              aiContent,
-              warning: 'No se pudo guardar el contenido en la base de datos debido a un error en la estructura de la tabla'
-            });
-          }
+          // Convertir el contenido AI a snake_case antes de enviarlo a la base de datos
+          const aiContentSnakeCase = convertObjectKeysToSnakeCase(aiContent);
+          console.log('Contenido AI convertido a snake_case para la base de datos');
           
           await updateStoryboard(storyboardId, {}, aiContent);
-          console.log('Storyboard actualizado exitosamente');
+          console.log('Storyboard actualizado exitosamente con el contenido AI');
         } catch (updateError) {
           console.error('Error al actualizar el storyboard:', updateError);
+          
+          // Loguear más detalles para depuración
+          if (updateError instanceof Error) {
+            console.error('Mensaje de error:', updateError.message);
+            console.error('Stack trace:', updateError.stack);
+          } else {
+            console.error('Error desconocido:', updateError);
+          }
+          
           // Devolver el contenido pero con una advertencia
           return NextResponse.json({ 
             success: true, 
             aiContent,
-            warning: 'Se generó el contenido pero no se pudo guardar en la base de datos'
+            warning: 'Se generó el contenido pero no se pudo guardar en la base de datos',
+            error: updateError instanceof Error ? updateError.message : 'Error desconocido'
           });
         }
       }

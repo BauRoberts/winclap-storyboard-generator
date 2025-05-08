@@ -510,3 +510,46 @@
 .notion-like-editor .ProseMirror p {
   font-size: 0.875rem !important;
 }
+
+/* Añadir al final de src/app/globals.css */
+
+/* Estilos para el modal de reorganización IA */
+.ai-reorganization-modal {
+  background-color: white !important;
+  border-radius: 0.5rem;
+  box-shadow: var(--notion-shadow);
+  border: 1px solid #e6e6e6;
+  opacity: 1 !important;
+}
+
+/* Asegurar que el fondo del diálogo sea opaco */
+[data-dialog-overlay] {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-dialog-content] {
+  background-color: white !important;
+  opacity: 1 !important;
+}
+
+/* Asegurar que las tipografías sean consistentes */
+.ai-reorganization-modal .DialogTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--notion-text-default);
+}
+
+.ai-reorganization-modal .DialogDescription {
+  font-size: 0.875rem;
+  color: var(--notion-text-gray);
+}
+
+/* Modo oscuro */
+.dark .ai-reorganization-modal {
+  background-color: var(--notion-bg-default) !important;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark [data-dialog-content] {
+  background-color: var(--notion-bg-default) !important;
+}

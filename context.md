@@ -193,3 +193,86 @@ Mantén un formato markdown legible para un editor de texto.
 - Colaboración en tiempo real
 - Estadísticas de uso por cliente
 - Integración con otras plataformas de Winclap
+
+Version 2
+
+# 🪄 Resumen del Proyecto Winclap Storyboard Generator
+
+## Contexto Actual
+
+Hemos desarrollado una plataforma interna para que los Content Partner Analysts de Winclap puedan generar storyboards completos para creadores y clientes de forma asistida por IA y automatización con Google Slides API.
+
+## Evolución del Proyecto
+
+### Fase 1: Diseño y Estructura de Base de Datos
+- Diseño del esquema en Supabase con entidades clave: Users, Clients, Creators, Storyboards, Templates
+- Implementación de relaciones, índices y políticas RLS
+- Integración de NextAuth con Google OAuth
+
+### Fase 2: Implementación Backend y Autenticación
+- Configuración de Next.js 15 con App Router
+- Creación de servicios para gestión de datos
+- Implementación de autenticación completa con manejo de sesiones
+
+### Fase 3: Editor TipTap y Sistema de Guardado
+- Integración del editor TipTap con extensiones avanzadas
+- Implementación de autoguardado estilo Notion
+- Desarrollo de la sincronización entre frontend y base de datos
+
+### Fase 4: Mejora del Flujo de Usuario y Reorganización con IA
+- **Problema identificado**: La vista dual (original/reorganizado) era confusa y generaba problemas de persistencia
+- **Solución implementada**: Nuevo flujo lineal con modal para reorganización
+
+#### Cambios clave en la última fase:
+1. **Nuevo flujo modal para reorganización con IA**:
+   - Usuario escribe texto libre en el editor principal
+   - Al hacer clic en "Reorganizar con IA", se abre un modal con el contenido estructurado
+   - El usuario puede editar este contenido en el modal
+   - Al hacer clic en "Generar Slides", se crean las diapositivas con Google Slides API
+
+2. **Mejoras técnicas implementadas**:
+   - Creación del componente `AIReorganizationModal` para mostrar y editar el contenido reorganizado
+   - Implementación de funciones de conversión entre camelCase (frontend) y snake_case (base de datos)
+   - Corrección de problemas de tipado en TypeScript
+   - Solución de problemas de persistencia en la base de datos
+
+3. **Solución de problemas de integración**:
+   - Corrección de errores en la conversión de formatos para la base de datos
+   - Mejora del manejo de estados en el editor
+   - Simplificación del flujo de usuario para evitar confusiones
+
+## Componentes Técnicos Clave
+
+1. **Frontend:**
+   - Next.js 15 con App Router
+   - TipTap para editor avanzado tipo Notion
+   - Tailwind CSS + shadcn/ui para componentes
+   - Modal para reorganización de contenido
+
+2. **Backend:**
+   - API routes de Next.js
+   - Integración con Supabase para persistencia
+   - Servicios de Claude (Anthropic) para procesamiento de IA
+   - Google Slides API para generación de presentaciones
+
+3. **Flujo de datos:**
+   - Entrada de texto libre en editor TipTap
+   - Procesamiento con Claude para estructuración
+   - Conversión de formatos para persistencia en base de datos
+   - Generación de presentaciones con Google Slides API
+
+## Estado Actual y Beneficios
+
+- **Persistencia de datos:** Se guardan correctamente tanto el contenido original como el reorganizado
+- **Conversión de formatos:** Funcionamiento correcto de la transformación entre camelCase y snake_case
+- **Flujo completo:** Proceso completo desde texto libre hasta slides generadas
+- **UI/UX mejorada:** Flujo más intuitivo y menos propenso a errores
+- **Base de datos:** Datos guardados correctamente en las tablas storyboards y storyboard_ai_content
+
+## Próximos Pasos Potenciales
+
+- Implementación de historial de versiones para los storyboards
+- Creación de plantillas predefinidas para diferentes tipos de contenido
+- Mejoras en feedback visual durante los procesos de generación
+- Dashboard con estadísticas de uso por cliente
+- Colaboración en tiempo real para trabajo en equipo

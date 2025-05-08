@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
@@ -26,6 +26,7 @@ import {
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: _session } = useSession();
   const [isExpanded, setIsExpanded] = useState(true);
   const [_isMobile, setIsMobile] = useState(false);
@@ -39,6 +40,20 @@ export default function Sidebar() {
     window.addEventListener('resize', checkSize);
     return () => window.removeEventListener('resize', checkSize);
   }, []);
+
+  // Función para crear un nuevo storyboard
+  const handleNewStoryboard = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // Redirecciona a la ruta /editor sin parámetros de ID
+    // Esto asegura que se cree un nuevo storyboard en vez de abrir uno existente
+    router.push('/editor');
+    
+    // Opcional: Limpiar cualquier borrador almacenado en localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('draft_content');
+    }
+  };
 
   const inicioNav = [
     { name: 'Storyboards', href: '/storyboards', icon: RefreshCw },
@@ -155,18 +170,18 @@ export default function Sidebar() {
         </motion.button>
       </div>
 
-      {/* Create New Button */}
+      {/* Create New Button - MODIFIED */}
       <div className="px-2 pt-2">
         <TooltipProvider delayDuration={300}>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
+            <Button
                 className={`w-full bg-black hover:bg-gray-800 text-white ${!isExpanded ? 'justify-center p-2' : 'justify-start'}`}
                 asChild
                 variant="default"
                 size={isExpanded ? 'default' : 'icon'}
               >
-                <Link href="/editor" className="flex items-center">
+                <Link href="/editor?new=true" className="flex items-center">
                   <PlusCircle className="h-5 w-5" />
                   <motion.span
                     className="ml-2"
