@@ -1,7 +1,7 @@
 // src/app/api/auth/options.ts (mejorado)
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
-import { supabase } from '@/lib/supabase';
+import { supabaseServer as supabase } from '@/lib/supabaseServer'; // ✅ backend-safe
 
 export const authOptions: NextAuthOptions = {
   providers: [
