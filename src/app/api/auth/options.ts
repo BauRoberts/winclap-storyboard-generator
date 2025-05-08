@@ -19,7 +19,7 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token, account}) {
       // Guardar tokens de Google en el token JWT
       if (account) {
         console.log('Account info recibida:', { 

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Loader2 } from "lucide-react";
-import { getTemplates, Template, createTemplate, updateTemplate, deleteTemplate, setDefaultTemplate } from "@/services/templateService";
+import { getTemplates, Template, createTemplate, deleteTemplate, setDefaultTemplate } from "@/services/templateService";
 import { LoadingState } from "@/components/LoadingState";
 import { ErrorState } from "@/components/ErrorState";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";

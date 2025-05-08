@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Loader2, FileText, ArrowLeft, ExternalLink, Copy, Check } from 'lucide-react';
+import { FileText, ArrowLeft, ExternalLink, Copy, Check } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';

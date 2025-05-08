@@ -54,7 +54,7 @@ export default function PillSelector({
 
   // Cerrar dropdown al hacer clic fuera
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (_event: MouseEvent) => {
       if (isOpen) {
         setIsOpen(false);
       }

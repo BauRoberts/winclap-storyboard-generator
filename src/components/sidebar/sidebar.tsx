@@ -26,7 +26,6 @@ import {
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const { data: _session } = useSession();
   const [isExpanded, setIsExpanded] = useState(true);
   const [_isMobile, setIsMobile] = useState(false);
@@ -41,19 +40,7 @@ export default function Sidebar() {
     return () => window.removeEventListener('resize', checkSize);
   }, []);
 
-  // Función para crear un nuevo storyboard
-  const handleNewStoryboard = (e: React.MouseEvent) => {
-    e.preventDefault();
-    
-    // Redirecciona a la ruta /editor sin parámetros de ID
-    // Esto asegura que se cree un nuevo storyboard en vez de abrir uno existente
-    router.push('/editor');
-    
-    // Opcional: Limpiar cualquier borrador almacenado en localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('draft_content');
-    }
-  };
+  
 
   const inicioNav = [
     { name: 'Storyboards', href: '/storyboards', icon: RefreshCw },

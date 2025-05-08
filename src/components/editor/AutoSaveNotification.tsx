@@ -22,40 +22,36 @@ const AutoSaveNotification: React.FC<AutoSaveNotificationProps> = ({
 
   // Efecto para manejar la visibilidad basado en el estado
   useEffect(() => {
-    // Limpiar cualquier temporizador previo
-    if (hideTimeout) {
-      clearTimeout(hideTimeout);
+    const timeout = hideTimeout;
+  
+    if (timeout) {
+      clearTimeout(timeout);
       setHideTimeout(null);
     }
-    
-    // Si el estado no es "idle", mostrar la notificación
+  
     if (status !== 'idle') {
       setVisible(true);
-      
-      // Si el estado es "saved", programar para ocultar después de 3 segundos
+  
       if (status === 'saved') {
-        const timeout = setTimeout(() => {
+        const t = setTimeout(() => {
           setVisible(false);
         }, 3000);
-        
-        setHideTimeout(timeout);
+        setHideTimeout(t);
       }
     } else {
-      // Si es "idle", ocultar después de una breve demora para animar
-      const timeout = setTimeout(() => {
+      const t = setTimeout(() => {
         setVisible(false);
       }, 300);
-      
-      setHideTimeout(timeout);
+      setHideTimeout(t);
     }
-    
-    // Limpiar temporizadores al desmontar
+  
     return () => {
-      if (hideTimeout) {
-        clearTimeout(hideTimeout);
+      if (timeout) {
+        clearTimeout(timeout);
       }
     };
-  }, [status]);
+  }, [status, hideTimeout]); 
+  
 
   // No renderizar nada si estamos en estado 'idle' y no visible
   if (status === 'idle' && !visible) {

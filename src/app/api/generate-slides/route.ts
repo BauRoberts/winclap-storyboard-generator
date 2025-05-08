@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/options';
 import { generateStoryboard } from '@/lib/googleApi';
-import { updateStoryboardSlides, getStoryboard } from '@/services/storyboardService';
+import { updateStoryboardSlides } from '@/services/storyboardService';
 
 interface AIContent {
   objective: string;

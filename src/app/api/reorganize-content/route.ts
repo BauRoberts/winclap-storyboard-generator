@@ -2,8 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateStoryboardContent } from '@/lib/anthropicService';
 import { updateStoryboard } from '@/services/storyboardService';
-import { supabase } from '@/lib/supabase';
-import { convertObjectKeysToSnakeCase } from '@/lib/utils';
+
 
 function createReorganizePrompt(text: string): string {
   return `
@@ -81,7 +80,7 @@ export async function POST(request: NextRequest) {
         
         try {
           // Convertir el contenido AI a snake_case antes de enviarlo a la base de datos
-          const aiContentSnakeCase = convertObjectKeysToSnakeCase(aiContent);
+          
           console.log('Contenido AI convertido a snake_case para la base de datos');
           
           await updateStoryboard(storyboardId, {}, aiContent);

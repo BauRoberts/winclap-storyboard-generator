@@ -110,31 +110,6 @@ export async function generateStoryboardContent(prompt: string): Promise<Storybo
     } catch (parseError) {
       console.error('Error al parsear JSON:', parseError);
       console.error('Contenido que causó el error:', contentText);
-      
-      // Crear un objeto mínimo con lo que podamos extraer
-      // Este es un fallback para no romper la aplicación
-      const fallbackContent: StoryboardContent = {
-        objective: "Error al procesar la respuesta - vuelve a intentarlo",
-        tone: "",
-        valueProp1: "",
-        valueProp2: "",
-        hook: "Error de procesamiento",
-        description: `No se pudo extraer el contenido correctamente. Error: ${parseError instanceof Error ? parseError.message : 'Desconocido'}`,
-        cta: "",
-        scene1Script: "",
-        scene1Visual: "",
-        scene1Sound: "",
-        scene2Script: "",
-        scene2Visual: "",
-        scene2Sound: "",
-        scene3Script: "",
-        scene3Visual: "",
-        scene3Sound: "",
-        scene4Script: "",
-        scene4Visual: "",
-        scene4Sound: ""
-      };
-      
       throw new Error(`Error al parsear la respuesta de la IA: ${parseError instanceof Error ? parseError.message : 'Error desconocido'}`);
     }
   } catch (error) {

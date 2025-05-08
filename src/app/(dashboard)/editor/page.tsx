@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import dynamic from 'next/dynamic';
 import EditorTopbar from '@/components/editor/EditorTopbar';
@@ -14,7 +14,7 @@ import { getStoryboard, updateStoryboard, createStoryboard } from '@/services/st
 import { useSupabase } from '@/hooks/useSupabase';
 import { LoadingState } from '@/components/LoadingState';
 import AIReorganizationModal from '@/components/editor/AIReorganizationModal';
-import { createAIContentFromText } from '@/lib/utils';
+
 
 // Tipo para la función de debounce
 type DebouncedFunction = {
@@ -26,12 +26,11 @@ type DebouncedFunction = {
 function debounce(func: (...args: any[]) => any, wait: number): DebouncedFunction {
   let timeout: NodeJS.Timeout | null = null;
   
-  const debouncedFunction = function(this: any, ...args: any[]) {
-    const context = this;
+  const debouncedFunction = (...args: any[]) => {
     if (timeout) clearTimeout(timeout);
-    
+  
     timeout = setTimeout(() => {
-      func.apply(context, args);
+      func(...args);
     }, wait);
   };
   
@@ -246,10 +245,6 @@ export default function EditorPage() {
       setAutoSaveStatus('saving');
       
       try {
-        // Guardamos el storyboard con el contenido actual
-        const savedId = await saveStoryboard(true);
-        
-        // Solo actualizar si esta es aún la versión más reciente
         if (currentVersion === contentVersionRef.current) {
           setLastSaved(new Date());
           setAutoSaveStatus('saved');
@@ -418,12 +413,14 @@ export default function EditorPage() {
   // Limpiar temporizador al desmontar
   useEffect(() => {
     return () => {
-      if (autoSaveTimerRef.current) {
-        clearTimeout(autoSaveTimerRef.current);
+      const timer = autoSaveTimerRef.current;
+      if (timer) {
+        clearTimeout(timer);
       }
       debouncedAutoSave.cancel();
     };
   }, [debouncedAutoSave]);
+  
 
   useEffect(() => {
     // Recuperar contenido del localStorage si existe y no hay storyboardId
@@ -642,7 +639,7 @@ export default function EditorPage() {
         aiContent={reorganizedContent}
         isGenerating={isGenerating}
         onGenerate={handleGenerateSlides}
-        onEdit={(json, text) => {
+        onEdit={(json, _text) => {
           // Actualizar el contenido reorganizado cuando se edita
           setReorganizedContent(json);
         }}
