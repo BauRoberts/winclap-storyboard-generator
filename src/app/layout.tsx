@@ -1,8 +1,13 @@
 import './globals.css';
-import { Inter } from 'next/font/google';
+import { Open_Sans } from 'next/font/google';
 import { NextAuthProvider } from './providers';
 
-const inter = Inter({ subsets: ['latin'] });
+// Configurar Open Sans con diferentes pesos de fuente
+const openSans = Open_Sans({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+  variable: '--font-open-sans', // Definir una variable CSS para usar en toda la app
+});
 
 export const metadata = {
   title: 'Winclap Storyboard Generator',
@@ -16,7 +21,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body className={inter.className}>
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+      </head>
+      <body className={`${openSans.variable} font-sans font-light`}>
         <NextAuthProvider>{children}</NextAuthProvider>
       </body>
     </html>

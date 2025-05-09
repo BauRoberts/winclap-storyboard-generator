@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
@@ -39,8 +40,6 @@ export default function Sidebar() {
     window.addEventListener('resize', checkSize);
     return () => window.removeEventListener('resize', checkSize);
   }, []);
-
-  
 
   const inicioNav = [
     { name: 'Storyboards', href: '/storyboards', icon: RefreshCw },
@@ -84,7 +83,7 @@ export default function Sidebar() {
     item: {
       name: string;
       href: string;
-      icon: React.ComponentType<{ className?: string }>;
+      icon: React.ComponentType<{ className?: string; size?: number; }>;
     };
     className?: string;
   }
@@ -104,7 +103,11 @@ export default function Sidebar() {
                 ${!isExpanded ? 'justify-center px-1 py-3' : ''}
               `}
             >
-              <item.icon className={`${isExpanded ? 'h-4 w-4 mr-2' : 'h-4 w-4'}`} />
+              {/* Usar solo las props compatibles */}
+              <item.icon 
+                className={isExpanded ? 'mr-2' : ''} 
+                size={isExpanded ? 16 : 22}
+              />
               <motion.span
                 variants={textVariants}
                 initial={isExpanded ? 'expanded' : 'collapsed'}
@@ -132,32 +135,39 @@ export default function Sidebar() {
       animate={isExpanded ? 'expanded' : 'collapsed'}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
     >
-      {/* Header */}
-      <div className="flex h-14 items-center justify-between border-b border-gray-200 px-3">
-        <div className="flex items-center">
-          <Building2 className={`${isExpanded ? 'h-5 w-5' : 'h-0 w-0'}`} />
-          <motion.span
-            className="font-semibold ml-1.5"
-            variants={textVariants}
-            initial={isExpanded ? 'expanded' : 'collapsed'}
-            animate={isExpanded ? 'expanded' : 'collapsed'}
-          >
-            Winclap Studio
-          </motion.span>
-        </div>
+      {/* Header with Logo - Mejorado para centrar */}
+      <div className="flex h-14 items-center border-b border-gray-200 px-3 relative">
+        {isExpanded ? (
+          <div className="w-full flex justify-center items-center">
+            <div className="relative">
+              <Image 
+                src="/logo.png" 
+                alt="Winclap Logo"
+                width={140}
+                height={36}
+                className="object-contain"
+                priority
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="w-0 opacity-0"></div>
+        )}
         <motion.button
           onClick={() => setIsExpanded(!isExpanded)}
-          className={`rounded-full p-0.5 hover:bg-gray-100 ${!isExpanded ? 'absolute left-3' : ''}`}
+          className={`rounded-full p-0.5 hover:bg-gray-100 absolute ${isExpanded ? 'right-3' : 'left-3'}`}
           variants={iconVariants}
           initial={isExpanded ? 'expanded' : 'collapsed'}
           animate={isExpanded ? 'expanded' : 'collapsed'}
           transition={{ duration: 0.3 }}
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft 
+            size={isExpanded ? 16 : 22}
+          />
         </motion.button>
       </div>
 
-      {/* Create New Button - MODIFIED */}
+      {/* Create New Button - ICONOS MÁS GRANDES */}
       <div className="px-2 pt-2">
         <TooltipProvider delayDuration={300}>
           <Tooltip>
@@ -169,7 +179,10 @@ export default function Sidebar() {
                 size={isExpanded ? 'default' : 'icon'}
               >
                 <Link href="/editor?new=true" className="flex items-center">
-                  <PlusCircle className="h-5 w-5" />
+                  <PlusCircle 
+                    className={isExpanded ? 'mr-2' : ''} 
+                    size={isExpanded ? 20 : 24}
+                  />
                   <motion.span
                     className="ml-2"
                     variants={textVariants}
@@ -239,7 +252,7 @@ export default function Sidebar() {
         </div>
       </nav>
 
-      {/* Logout button */}
+      {/* Logout button - ICONO MÁS GRANDE */}
       <div className="border-t border-gray-100 px-2 py-2">
         <TooltipProvider delayDuration={300}>
           <Tooltip>
@@ -251,8 +264,12 @@ export default function Sidebar() {
                   ${!isExpanded ? 'justify-center px-1 py-3' : ''}
                 `}
               >
-                <LogOut className={`${isExpanded ? 'h-4 w-4 mr-2' : 'h-4 w-4'}`} />
+                <LogOut 
+                  className={isExpanded ? 'mr-2' : ''} 
+                  size={isExpanded ? 16 : 22}
+                />
                 <motion.span
+                  className="ml-2"
                   variants={textVariants}
                   initial={isExpanded ? 'expanded' : 'collapsed'}
                   animate={isExpanded ? 'expanded' : 'collapsed'}
