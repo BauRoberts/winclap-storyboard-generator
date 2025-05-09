@@ -1,5 +1,6 @@
 // src/components/ui/CreatorAvatar.tsx
 import React from 'react';
+import Image from 'next/image';
 
 interface CreatorAvatarProps {
   name?: string;
@@ -60,10 +61,12 @@ export const CreatorAvatar: React.FC<CreatorAvatarProps> = ({
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       {imageUrl ? (
-        <img
+        <Image
           src={imageUrl}
           alt={name || 'Creator'}
           className={`${sizeClass} rounded-full object-cover`}
+          width={size === 'sm' ? 24 : size === 'md' ? 32 : 40}
+          height={size === 'sm' ? 24 : size === 'md' ? 32 : 40}
         />
       ) : (
         <div className={`${sizeClass} rounded-full ${bgColor} text-white flex items-center justify-center font-medium`}>

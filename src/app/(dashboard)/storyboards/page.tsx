@@ -307,7 +307,7 @@ export default function NotionStyleStoryboardsPage() {
                   </TableHead>
                   <TableHead className="py-3 px-4 font-medium text-gray-500">
                     <div className="flex items-center gap-2">
-                      <Image className="h-4 w-4 text-gray-400" />
+                      <Image className="h-4 w-4 text-gray-400" aria-hidden="true" />
                       Assets
                     </div>
                   </TableHead>

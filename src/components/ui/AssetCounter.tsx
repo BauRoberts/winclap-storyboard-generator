@@ -35,7 +35,7 @@ export const AssetCounter: React.FC<AssetCounterProps> = ({ assets, className = 
         });
         assetTypes = parsed;
       }
-    } catch (e) {
+    } catch (error) {
       // Si no es un JSON, verificamos si es "Disponible"
       if (assets === 'Disponible' || assets.toLowerCase() === 'disponible') {
         count = 1;
@@ -94,12 +94,12 @@ function getAssetType(asset: any): string {
 // Devuelve el icono adecuado según los tipos de assets
 function getIconForAssets(types: Record<string, number>): React.ReactNode {
   if (types.image && types.image > 0) {
-    return <Image className="h-4 w-4" />;
+    return <Image className="h-4 w-4" aria-hidden="true" />;
   } else if (types.video && types.video > 0) {
-    return <Film className="h-4 w-4" />;
+    return <Film className="h-4 w-4" aria-hidden="true" />;
   } else if (types.document && types.document > 0) {
-    return <FileText className="h-4 w-4" />;
+    return <FileText className="h-4 w-4" aria-hidden="true" />;
   } else {
-    return <FileCode className="h-4 w-4" />;
+    return <FileCode className="h-4 w-4" aria-hidden="true" />;
   }
 }
