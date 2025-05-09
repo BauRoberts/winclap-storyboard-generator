@@ -14,7 +14,8 @@ import {
   ChevronLeft,
   Users,
   FileImage,
-  LogOut
+  LogOut,
+  LucideIcon
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,70 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+// Define tipos para las categorías de iconos
+type IconType = 'navigation' | 'newButton' | 'collapse' | 'logout';
+
+// =====================================
+// AJUSTA ESTOS VALORES PARA LOS ICONOS:
+// =====================================
+const ICON_SIZES = {
+  // Tamaños para la barra expandida
+  expanded: {
+    navigation: 22,    // Iconos de navegación normal (antes 16)
+    newButton: 20,     // Botón de New Storyboard (antes 20)
+    collapse: 18,      // Botón de colapsar (antes 16)
+    logout: 18         // Botón de cerrar sesión (antes 16)
+  },
+  // Tamaños para la barra colapsada
+  collapsed: {
+    navigation: 18,    // Iconos de navegación normal (antes 22)
+    newButton: 24,     // Botón de New Storyboard (antes 24)
+    collapse: 22,      // Botón de colapsar (antes 22)
+    logout: 22         // Botón de cerrar sesión (antes 22)
+  }
+};
+
+// Estilos inline para asegurar prioridad
+const getIconStyle = (isExpanded: boolean, type: IconType) => {
+  const size = isExpanded 
+    ? ICON_SIZES.expanded[type] 
+    : ICON_SIZES.collapsed[type];
+  
+  return {
+    width: `${size}px`,
+    height: `${size}px`,
+    minWidth: `${size}px`,
+    minHeight: `${size}px`
+  };
+};
+
+interface CustomIconProps {
+  Icon: LucideIcon;
+  isExpanded: boolean;
+  type?: IconType;
+  className?: string;
+  extraClass?: string;
+}
+
+// Estilos CSS para aplicar directamente como un componente
+const CustomIcon = ({ 
+  Icon, 
+  isExpanded, 
+  type = 'navigation', 
+  className = '', 
+  extraClass = '' 
+}: CustomIconProps) => (
+  <div 
+    style={getIconStyle(isExpanded, type)} 
+    className={`flex items-center justify-center ${extraClass}`}
+  >
+    <Icon 
+      className={`${className} icon-override`} 
+      size={isExpanded ? ICON_SIZES.expanded[type] : ICON_SIZES.collapsed[type]} 
+    />
+  </div>
+);
+
 export default function Sidebar() {
   const pathname = usePathname();
   const { data: _session } = useSession();
@@ -32,6 +97,16 @@ export default function Sidebar() {
   const [_isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // Aplicar estilos directamente a los SVG cuando se monta el componente y cuando cambia el estado de expansión
+    const applySvgStyles = () => {
+      const svgElements = document.querySelectorAll('.icon-override');
+      svgElements.forEach(svg => {
+        svg.setAttribute('stroke-width', '1.75');
+      });
+    };
+
+    applySvgStyles();
+    
     const checkSize = () => {
       setIsMobile(window.innerWidth < 768);
       if (window.innerWidth < 768) setIsExpanded(false);
@@ -39,22 +114,28 @@ export default function Sidebar() {
     checkSize();
     window.addEventListener('resize', checkSize);
     return () => window.removeEventListener('resize', checkSize);
-  }, []);
+  }, [isExpanded]);
 
-  const inicioNav = [
+  interface NavItem {
+    name: string;
+    href: string;
+    icon: LucideIcon;
+  }
+
+  const inicioNav: NavItem[] = [
     { name: 'Storyboards', href: '/storyboards', icon: RefreshCw },
     { name: 'Inspiration Board', href: '/inspiration', icon: FileImage },
   ];
 
-  const clientesNav = [
+  const clientesNav: NavItem[] = [
     { name: 'Clientes', href: '/clients', icon: Building2 },
   ];
 
-  const creadoresNav = [
+  const creadoresNav: NavItem[] = [
     { name: 'Creadores', href: '/creators', icon: Users },
   ];
 
-  const configNav = [
+  const configNav: NavItem[] = [
     { name: 'Configuración', href: '/config', icon: Settings },
   ];
 
@@ -80,11 +161,7 @@ export default function Sidebar() {
   };
 
   interface NavItemProps {
-    item: {
-      name: string;
-      href: string;
-      icon: React.ComponentType<{ className?: string; size?: number; }>;
-    };
+    item: NavItem;
     className?: string;
   }
 
@@ -103,10 +180,11 @@ export default function Sidebar() {
                 ${!isExpanded ? 'justify-center px-1 py-3' : ''}
               `}
             >
-              {/* Usar solo las props compatibles */}
-              <item.icon 
-                className={isExpanded ? 'mr-2' : ''} 
-                size={isExpanded ? 16 : 22}
+              <CustomIcon
+                Icon={item.icon}
+                isExpanded={isExpanded}
+                type="navigation"
+                className={isExpanded ? 'mr-2' : ''}
               />
               <motion.span
                 variants={textVariants}
@@ -161,9 +239,15 @@ export default function Sidebar() {
           animate={isExpanded ? 'expanded' : 'collapsed'}
           transition={{ duration: 0.3 }}
         >
-          <ChevronLeft 
-            size={isExpanded ? 16 : 22}
-          />
+          <div 
+            style={getIconStyle(isExpanded, 'collapse')} 
+            className="flex items-center justify-center"
+          >
+            <ChevronLeft 
+              className="icon-override" 
+              size={isExpanded ? ICON_SIZES.expanded.collapse : ICON_SIZES.collapsed.collapse} 
+            />
+          </div>
         </motion.button>
       </div>
 
@@ -179,10 +263,15 @@ export default function Sidebar() {
                 size={isExpanded ? 'default' : 'icon'}
               >
                 <Link href="/editor?new=true" className="flex items-center">
-                  <PlusCircle 
-                    className={isExpanded ? 'mr-2' : ''} 
-                    size={isExpanded ? 20 : 24}
-                  />
+                  <div 
+                    style={getIconStyle(isExpanded, 'newButton')} 
+                    className="flex items-center justify-center"
+                  >
+                    <PlusCircle 
+                      className="icon-override" 
+                      size={isExpanded ? ICON_SIZES.expanded.newButton : ICON_SIZES.collapsed.newButton} 
+                    />
+                  </div>
                   <motion.span
                     className="ml-2"
                     variants={textVariants}
@@ -264,10 +353,15 @@ export default function Sidebar() {
                   ${!isExpanded ? 'justify-center px-1 py-3' : ''}
                 `}
               >
-                <LogOut 
-                  className={isExpanded ? 'mr-2' : ''} 
-                  size={isExpanded ? 16 : 22}
-                />
+                <div 
+                  style={getIconStyle(isExpanded, 'logout')} 
+                  className="flex items-center justify-center"
+                >
+                  <LogOut 
+                    className={`${isExpanded ? 'mr-2' : ''} icon-override`} 
+                    size={isExpanded ? ICON_SIZES.expanded.logout : ICON_SIZES.collapsed.logout} 
+                  />
+                </div>
                 <motion.span
                   className="ml-2"
                   variants={textVariants}
@@ -286,6 +380,13 @@ export default function Sidebar() {
           </Tooltip>
         </TooltipProvider>
       </div>
+
+      {/* Estilos CSS internos para forzar el grosor de los iconos */}
+      <style jsx global>{`
+        .icon-override {
+          stroke-width: 1.75px !important;
+        }
+      `}</style>
     </motion.div>
   );
 }

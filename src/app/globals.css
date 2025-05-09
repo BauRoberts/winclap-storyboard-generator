@@ -35,6 +35,9 @@
   --notion-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, 
                   rgba(15, 15, 15, 0.1) 0px 3px 6px, 
                   rgba(15, 15, 15, 0.2) 0px 9px 24px;
+  
+  /* Variable para fuente Open Sans */
+  --font-primary: var(--font-open-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
 }
 
 .dark {
@@ -69,41 +72,21 @@
                   rgba(15, 15, 15, 0.4) 0px 9px 24px;
 }
 
-/* Estilos personalizados generales */
-.winclap-logo {
-  font-weight: 700;
-  letter-spacing: -0.025em;
+/* Estilos base para tipografía y UI */
+html, body, #__next, button, a, li, p, span, h1, h2, h3, div {
+  font-family: var(--font-primary) !important;
 }
 
-.form-card {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: box-shadow 0.2s ease-in-out;
+body {
+  font-weight: 300 !important;
 }
 
-.form-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600 !important;
 }
 
-.btn-primary {
-  background-color: black;
-  color: white;
-  transition: background-color 0.2s;
-}
-
-.btn-primary:hover {
-  background-color: #333;
-}
-
-.btn-outline {
-  border: 1px solid #e5e5e5;
-  background-color: transparent;
-  color: black;
-}
-
-.btn-outline:hover {
-  background-color: #f5f5f5;
+b, strong {
+  font-weight: 600 !important;
 }
 
 /* Sidebar styles */
@@ -113,6 +96,29 @@
 
 .sidebar-link-inactive {
   @apply text-gray-700 hover:bg-gray-50 hover:text-gray-900;
+}
+
+.sidebar a, .sidebar button {
+  font-weight: 400 !important;
+}
+
+/* Sidebar icon styles */
+.sidebar svg {
+  stroke-width: 1.75px;
+}
+
+.sidebar[style*="width: 3rem"] svg {
+  min-width: 22px !important;
+  min-height: 22px !important;
+  width: 22px !important;
+  height: 22px !important;
+}
+
+.sidebar[style*="width: 3rem"] a[href^="/editor"] svg {
+  min-width: 24px !important;
+  min-height: 24px !important;
+  width: 24px !important;
+  height: 24px !important;
 }
 
 /* Asegurar que la barra de acciones tenga el margen correcto */
@@ -137,15 +143,6 @@
   @apply h-6 w-6 rounded-full bg-black text-white flex items-center justify-center text-sm;
 }
 
-/* Collapsible chevron transition */
-.collapsible-chevron {
-  @apply transition-transform duration-200;
-}
-
-.collapsible-open .collapsible-chevron {
-  @apply rotate-90;
-}
-
 /* Scroll personalizado */
 ::-webkit-scrollbar {
   width: 6px;
@@ -164,71 +161,55 @@
   background-color: rgba(155, 155, 155, 0.7);
 }
 
-/* ==============================
-   ESTILOS PARA EL EDITOR NOTION
-   ============================== */
-
-   .notion-like-editor .ProseMirror {
-    min-height: calc(100vh - 200px);
-    padding: 0 6px;
-    color: var(--notion-text-default);
-    font-family: var(--font-open-sans), ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif;
-    font-size: 0.875rem !important; /* Tamaño text-xs para coincidir con los selectores */
-    line-height: 1.5;
-    overflow-y: auto;
-  }
-
-/* Estilos para el ProseMirror */
+/* Estilos para el editor tipo Notion */
 .notion-like-editor .ProseMirror {
   min-height: calc(100vh - 200px);
   padding: 0 6px;
   color: var(--notion-text-default);
-  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif;
-  font-size: 0.875rem !important; /* Tamaño text-xs para coincidir con los selectores */
+  font-family: var(--font-primary);
+  font-size: 0.875rem !important;
+  font-weight: 300;
   line-height: 1.5;
   overflow-y: auto;
 }
 
-/* Eliminar bordes y decoraciones para el focus */
 .notion-like-editor .ProseMirror:focus {
   outline: none;
   box-shadow: none;
   border: none;
 }
 
-/* Estilos de tipografía */
-.notion-like-editor .ProseMirror h1 {
-  font-size: 2rem;
+.notion-like-editor .ProseMirror h1,
+.notion-like-editor .ProseMirror h2,
+.notion-like-editor .ProseMirror h3 {
   font-weight: 600;
-  margin-top: 1.4em;
-  margin-bottom: 0.4em;
   color: var(--notion-text-default);
   line-height: 1.3;
+}
+
+.notion-like-editor .ProseMirror h1 {
+  font-size: 2rem;
+  margin-top: 1.4em;
+  margin-bottom: 0.4em;
 }
 
 .notion-like-editor .ProseMirror h2 {
   font-size: 1.5rem;
-  font-weight: 600;
   margin-top: 1.3em;
   margin-bottom: 0.3em;
-  color: var(--notion-text-default);
-  line-height: 1.3;
 }
 
 .notion-like-editor .ProseMirror h3 {
   font-size: 1.25rem;
-  font-weight: 600;
   margin-top: 1.2em;
   margin-bottom: 0.2em;
-  color: var(--notion-text-default);
-  line-height: 1.3;
 }
 
 .notion-like-editor .ProseMirror p {
   margin-bottom: 0.5em;
   line-height: 1.5;
   min-height: 1.5em;
-  font-size: 0.875rem !important; /* Tamaño text-xs para coincidir con los selectores */
+  font-size: 0.875rem !important;
 }
 
 .notion-like-editor .ProseMirror ul,
@@ -243,10 +224,6 @@
 
 .notion-like-editor .ProseMirror ol li {
   list-style-type: decimal;
-}
-
-.notion-like-editor .ProseMirror li {
-  padding: 3px 0;
 }
 
 .notion-like-editor .ProseMirror blockquote {
@@ -264,163 +241,34 @@
   font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
-.notion-like-editor .ProseMirror pre {
-  background-color: #f6f6f4;
-  border-radius: 3px;
-  padding: 0.5em 1em;
-}
-
-.notion-like-editor .ProseMirror pre code {
-  background-color: transparent;
-  padding: 0;
-}
-
-/* Estilos para placeholder */
 .notion-like-editor .ProseMirror p.is-editor-empty:first-child::before {
   color: var(--notion-text-light);
   content: "Empieza escribiendo o pega tu briefing aquí...";
   float: left;
   pointer-events: none;
   height: 0;
-  font-size: 0.875rem !important; /* Tamaño text-xs para coincidir con los selectores */
+  font-size: 0.875rem !important;
 }
 
-/* Estilos para el focus de los elementos */
-.notion-like-editor .has-focus {
-  background-color: rgba(35, 131, 226, 0.03);
-  border-radius: 3px;
-  transition: box-shadow 0.2s ease;
-}
-
-/* Estilos para botones flotantes */
-.floating-buttons {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
-  z-index: 50;
-}
-
-.floating-button {
-  border-radius: 4px;
-  box-shadow: var(--notion-shadow);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  background-color: white;
-}
-
-.floating-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-  background-color: var(--notion-bg-hover);
-}
-
-/* Estilos para la barra superior */
-.editor-topbar {
-  padding: 0.75rem 1.5rem;
-  background-color: white;
-  z-index: 10;
-  border: none !important; /* Eliminar cualquier borde */
-}
-
-.editor-topbar-title {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: var(--notion-text-default);
-  margin: 0;
-  padding: 0;
-  line-height: 1.3;
-  outline: none;
-  border: none;
-  background: transparent;
-}
-
-.editor-topbar-title:focus {
-  border-bottom: 2px solid var(--notion-border-focus);
-  padding-bottom: 2px;
-}
-
-/* Estilos para el slash command */
-.slash-command {
-  position: absolute;
-  z-index: 50;
-  background-color: white;
-  border-radius: 0.375rem;
-  box-shadow: var(--notion-shadow);
-  overflow: hidden;
-}
-
-.slash-command-item {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
-}
-
-.slash-command-item:hover {
-  background-color: var(--notion-bg-hover);
-}
-
-/* Estilos para el floating toolbar */
-.floating-menu {
-  position: absolute;
-  z-index: 50;
-  margin-top: -0.25rem;
-  visibility: hidden;
-  opacity: 0;
-  transition: opacity 0.2s, visibility 0.2s;
-  border-radius: 0.375rem;
-  background-color: white;
-  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.1)) drop-shadow(0 1px 1px rgb(0 0 0 / 0.06));
-  overflow: hidden;
-}
-
-.floating-menu.is-active {
-  opacity: 1;
-  visibility: visible;
-}
-
-.dropdown-menu-item {
-  padding: 6px 12px !important;
-  font-size: 14px !important;
-  color: var(--notion-text-default) !important;
-}
-
-.dropdown-menu-item:hover {
-  background-color: var(--notion-bg-hover) !important;
-}
-
-/* Estilos para los selectores */
-.notion-selector {
-  display: inline-flex;
-  align-items: center;
-  font-size: 14px;
-  color: var(--notion-text-gray);
-  padding: 6px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 20ms ease-in;
-}
-
-.notion-selector:hover {
-  background-color: var(--notion-bg-hover);
-}
-
-/* Estilos para los tooltips */
-.tippy-box {
+/* Estilos para el modal de reorganización IA */
+.ai-reorganization-modal {
   background-color: white !important;
-  color: var(--notion-text-default) !important;
-  box-shadow: var(--notion-shadow) !important;
-  border: 1px solid #E6E6E6 !important;
-  border-radius: 4px !important;
+  border-radius: 0.5rem;
+  box-shadow: var(--notion-shadow);
+  border: 1px solid #e6e6e6;
+  opacity: 1 !important;
 }
 
-.tippy-arrow {
-  color: white !important;
+[data-dialog-overlay] {
+  background-color: rgba(0, 0, 0, 0.5) !important;
 }
 
-/* Modo oscuro - ajustes adicionales */
+[data-dialog-content] {
+  background-color: white !important;
+  opacity: 1 !important;
+}
+
+/* Modos */
 .dark .notion-like-editor .ProseMirror {
   color: var(--notion-text-default);
 }
@@ -440,101 +288,6 @@
   background-color: rgba(135, 131, 120, 0.3);
 }
 
-.dark .notion-like-editor .has-focus {
-  background-color: rgba(35, 131, 226, 0.06);
-}
-
-.dark .floating-button {
-  background-color: var(--notion-bg-default);
-  box-shadow: rgba(15, 15, 15, 0.2) 0px 0px 0px 1px, 
-              rgba(15, 15, 15, 0.2) 0px 2px 4px;
-}
-
-.dark .tippy-box,
-.dark .dropdown-menu-content {
-  background-color: var(--notion-bg-default) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-.dark .tippy-arrow {
-  color: var(--notion-bg-default) !important;
-}
-
-/* Ajustes de alineación para el topbar */
-.notion-like-editor, 
-.editor-topbar > div,
-.editor-topbar .breadcrumbs {
-  max-width: 900px;
-  margin: 0 auto;
-  padding-left: 6px !important;
-  padding-right: 6px !important;
-}
-
-/* Asegurar que el título y contenido estén alineados */
-.editor-topbar-title,
-.notion-like-editor .ProseMirror {
-  margin-left: 0;
-  padding-left: 0;
-}
-
-.editor-topbar {
-  padding-top: 2rem !important;
-}
-
-/* Eliminar bordes y espacios no deseados */
-.editor-page {
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.sidebar {
-  border-right: none !important;
-  background: white !important;
-}
-
-/* Asegurar consistencia en el tamaño de texto */
-.notion-like-editor .ProseMirror {
-  font-size: 0.875rem !important;
-}
-
-.notion-like-editor .ProseMirror p {
-  font-size: 0.875rem !important;
-}
-
-/* Añadir al final de src/app/globals.css */
-
-/* Estilos para el modal de reorganización IA */
-.ai-reorganization-modal {
-  background-color: white !important;
-  border-radius: 0.5rem;
-  box-shadow: var(--notion-shadow);
-  border: 1px solid #e6e6e6;
-  opacity: 1 !important;
-}
-
-/* Asegurar que el fondo del diálogo sea opaco */
-[data-dialog-overlay] {
-  background-color: rgba(0, 0, 0, 0.5) !important;
-}
-
-[data-dialog-content] {
-  background-color: white !important;
-  opacity: 1 !important;
-}
-
-/* Asegurar que las tipografías sean consistentes */
-.ai-reorganization-modal .DialogTitle {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--notion-text-default);
-}
-
-.ai-reorganization-modal .DialogDescription {
-  font-size: 0.875rem;
-  color: var(--notion-text-gray);
-}
-
-/* Modo oscuro */
 .dark .ai-reorganization-modal {
   background-color: var(--notion-bg-default) !important;
   border-color: rgba(255, 255, 255, 0.1);
@@ -544,106 +297,7 @@
   background-color: var(--notion-bg-default) !important;
 }
 
-/* Asegura fondo blanco en cualquier dropdown abierto */
-[data-side][data-state="open"],
-[data-side][data-state="open"] > * {
-  background-color: white !important;
-  border: 1px solid #E6E6E6 !important;
-  box-shadow: var(--notion-shadow) !important;
-  border-radius: 4px !important;
-  padding: 4px 0 !important;
-  backdrop-filter: none !important; /* Quita el blur si existiera */
-}
-
-/* Fuerza a remover cualquier blur o transparencia en los Dropdowns */
-[data-side][data-state="open"] {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  background-color: white !important;
-  border: 1px solid #E6E6E6 !important;
-  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1) !important;
-  border-radius: 0.5rem !important;
-  padding: 4px 0 !important;
-  opacity: 1 !important;
-}
-
-/* Ajuste de peso de fuente global */
-body {
-  font-weight: 300; /* Hacer que el texto normal sea más fino */
-}
-
-/* Mantener ciertos elementos con pesos específicos */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 600; /* Mantener encabezados con peso semibold */
-}
-
-b, strong {
-  font-weight: 600; /* Hacer que el texto en negrita sea semibold en lugar de bold */
-}
-
-/* Ajuste para el editor tipo Notion */
-.notion-like-editor .ProseMirror {
-  font-weight: 300; /* Aplicar peso light al texto del editor */
-}
-
-.notion-like-editor .ProseMirror h1,
-.notion-like-editor .ProseMirror h2,
-.notion-like-editor .ProseMirror h3 {
-  font-weight: 600; /* Mantener encabezados del editor con peso semibold */
-}
-
-/* Ajustes para la barra lateral */
-.sidebar-link-active,
-.sidebar-link-inactive {
-  font-weight: 400; /* Peso normal para enlaces de la barra lateral */
-}
-
-/* Botones y UI interactiva */
-button, 
-.btn-primary,
-.btn-outline {
-  font-weight: 400; /* Mantener peso normal para botones */
-}
-
-/* Logo de Winclap puede mantenerse en negrita pero menos pesado */
-.winclap-logo {
-  font-weight: 600; /* Cambiar de 700 a 600 para que sea menos pesado */
-}
-
-/* Estilos para el logo en la sidebar */
-.sidebar-logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sidebar-logo img {
-  max-width: 100%;
-  height: auto;
-  transition: all 0.3s ease;
-}
-
-/* Asegurar que el logo tenga un tamaño mínimo adecuado en modo colapsado */
-.sidebar-collapsed .sidebar-logo img {
-  max-width: 24px;
-  max-height: 24px;
-}
-
-/* Agregar al final de globals.css para modificar el grosor de los iconos */
-
-/* Ajusta el grosor de línea de los iconos de Lucide para que se vean mejor */
-svg[class*="lucide-"] {
-  stroke-width: 1.75px;
-}
-
-/* Aumenta el grosor solo cuando la barra está colapsada */
-.sidebar svg {
-  stroke-width: 1.75px;
-}
-
-/* Asegura que los iconos grandes para el modo colapsado tengan espacio suficiente */
-.sidebar button svg,
-.sidebar a svg {
-  min-width: 20px;
-  min-height: 20px;
+/* Forzar tamaño de iconos en la barra lateral colapsada y grosor */
+.icon-override {
+  stroke-width: 1.75px !important;
 }
