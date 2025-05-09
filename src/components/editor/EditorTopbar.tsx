@@ -96,7 +96,13 @@ export default function EditorTopbar({
     setIsLoadingCreators(true);
     try {
       const data = await getCreators();
-      setCreators(data.map(creator => ({ id: creator.id!, name: creator.name })));
+      setCreators(
+        data.map(creator => ({
+          id: creator.id!,
+          name: String(creator.name || creator.email || creator.id)
+        }))
+      );
+      
     } catch (error) {
       console.error('Error loading creators:', error);
     } finally {
