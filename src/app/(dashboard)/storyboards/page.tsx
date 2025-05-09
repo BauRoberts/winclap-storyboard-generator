@@ -37,7 +37,6 @@ import {
   ChevronDown,
   Filter,
   User,
-  Image,
   Layout,
   Clock,
   ExternalLink,
