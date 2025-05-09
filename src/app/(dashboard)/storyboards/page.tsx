@@ -73,7 +73,7 @@ export default function NotionStyleStoryboardsPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
   const [editMode, setEditMode] = useState<boolean>(false);
   const [filterMenuOpen, setFilterMenuOpen] = useState<boolean>(false);
-  const [activeFilters, setActiveFilters] = useState<ActiveFilters>({});
+  const [activeFilters] = useState<ActiveFilters>({});
 
   // Cargar storyboards
   const loadStoryboards = async () => {
@@ -347,7 +347,7 @@ export default function NotionStyleStoryboardsPage() {
                   </TableHead>
                   <TableHead className="py-3 px-4 font-medium text-gray-500">
                     <div className="flex items-center gap-2">
-                      <Image className="h-4 w-4 text-gray-400" />
+                      <img src="/icons/assets-icon.svg" alt="Assets icon" width={16} height={16} className="text-gray-400" />
                       Assets
                     </div>
                   </TableHead>
