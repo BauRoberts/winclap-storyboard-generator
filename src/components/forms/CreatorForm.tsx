@@ -39,7 +39,7 @@ export function CreatorForm({ creator, onSuccess, onCancel }: CreatorFormProps) 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof Creator, string>> = {};
     
-    if (!formData.name?.trim()) {
+    if (typeof formData.name === 'string' && !formData.name.trim()) {
       newErrors.name = 'El nombre es requerido';
     }
     
@@ -80,7 +80,7 @@ export function CreatorForm({ creator, onSuccess, onCancel }: CreatorFormProps) 
         <Input 
           id="name"
           name="name"
-          value={formData.name}
+          value={typeof formData.name === 'string' ? formData.name : ''}
           onChange={handleChange}
           disabled={isSubmitting}
           className={errors.name ? 'border-red-500' : ''}
@@ -115,7 +115,7 @@ export function CreatorForm({ creator, onSuccess, onCancel }: CreatorFormProps) 
         <Input 
           id="followers"
           name="followers"
-          value={formData.followers}
+          value={typeof formData.followers === 'boolean' ? '' : formData.followers}
           onChange={handleChange}
           disabled={isSubmitting}
         />
