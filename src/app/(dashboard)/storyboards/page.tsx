@@ -43,12 +43,17 @@ import {
   FilePlus,
   Edit,
   Copy,
-  Trash
+  Trash,
+  Image
 } from 'lucide-react';
 import Link from 'next/link';
 import { getStoryboards, deleteStoryboard, StoryboardWithRelations } from '@/services/storyboardService';
 import { LoadingState } from '@/components/LoadingState';
 import { ErrorState } from '@/components/ErrorState';
+import { StatusPill } from '@/components/ui/StatusPill';
+import { PlatformDisplay } from '@/components/ui/PlatformLogo';
+import { AssetCounter } from '@/components/ui/AssetCounter';
+import { CreatorAvatar } from '@/components/ui/CreatorAvatar';
 
 // Definir interfaces para el estado
 interface SortConfig {
@@ -175,29 +180,6 @@ export default function NotionStyleStoryboardsPage() {
     }).format(date);
   };
 
-  // Obtener color según estado
-  const getStatusColor = (status?: string): string => {
-    if (!status) return 'bg-gray-100 text-gray-800';
-    
-    switch(status.toLowerCase()) {
-      case 'aprobado':
-      case 'done':
-        return 'bg-green-100 text-green-800';
-      case 'en revisión':
-      case 'review':
-        return 'bg-amber-100 text-amber-800';
-      case 'planificación':
-      case 'draft':
-      case 'not_started':
-        return 'bg-blue-100 text-blue-800';
-      case 'creación':
-      case 'in_progress':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   // Manejar eliminación de storyboard
   const handleDeleteStoryboard = async () => {
     if (!selectedStoryboard?.id) return;
@@ -210,36 +192,6 @@ export default function NotionStyleStoryboardsPage() {
       console.error('Error deleting storyboard:', err);
       setError('Error al eliminar el storyboard. Por favor, intenta nuevamente.');
     }
-  };
-
-  // Renderizar plataformas como etiquetas
-  const renderPlatforms = (platforms?: string[]): React.ReactNode => {
-    if (!platforms || platforms.length === 0) return '-';
-    
-    return (
-      <div className="flex flex-wrap gap-1">
-        {platforms.map((platform: string, index: number) => (
-          <span 
-            key={index} 
-            className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-          >
-            {platform}
-          </span>
-        ))}
-      </div>
-    );
-  };
-
-  // Renderizar assets como indicador visual
-  const renderAssets = (assets?: string): React.ReactNode => {
-    if (!assets) return '-';
-    
-    return (
-      <div className="flex items-center">
-        <span className="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
-        <span className="text-sm text-gray-600">Disponible</span>
-      </div>
-    );
   };
 
   if (isLoading) return <LoadingState />;
@@ -344,9 +296,18 @@ export default function NotionStyleStoryboardsPage() {
                       Cliente
                     </div>
                   </TableHead>
+                  <TableHead 
+                    className="py-3 px-4 font-medium text-gray-500 cursor-pointer"
+                    onClick={() => handleSort('creator.name')}
+                  >
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-gray-400" />
+                      Creador
+                    </div>
+                  </TableHead>
                   <TableHead className="py-3 px-4 font-medium text-gray-500">
                     <div className="flex items-center gap-2">
-                      <img src="/icons/assets-icon.svg" alt="Assets icon" width={16} height={16} className="text-gray-400" />
+                      <Image className="h-4 w-4 text-gray-400" />
                       Assets
                     </div>
                   </TableHead>
@@ -380,7 +341,7 @@ export default function NotionStyleStoryboardsPage() {
               <TableBody>
                 {sortedStoryboards.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                       No se encontraron storyboards
                     </TableCell>
                   </TableRow>
@@ -396,15 +357,19 @@ export default function NotionStyleStoryboardsPage() {
                         {storyboard.client?.name || '-'}
                       </TableCell>
                       <TableCell className="py-3 px-4">
-                        {renderAssets(storyboard.assets ?? undefined)}
+                        <CreatorAvatar 
+                          name={storyboard.creator?.name}
+                          size="sm"
+                        />
                       </TableCell>
                       <TableCell className="py-3 px-4">
-                        {renderPlatforms(storyboard.platforms ?? undefined)}
+                        <AssetCounter assets={storyboard.assets} />
                       </TableCell>
                       <TableCell className="py-3 px-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(storyboard.status)}`}>
-                          {storyboard.status || 'Draft'}
-                        </span>
+                        <PlatformDisplay platforms={storyboard.platforms} />
+                      </TableCell>
+                      <TableCell className="py-3 px-4">
+                        <StatusPill status={storyboard.status} />
                       </TableCell>
                       <TableCell className="py-3 px-4 text-gray-700">
                         {formatDate(storyboard.created_at)}
@@ -461,7 +426,7 @@ export default function NotionStyleStoryboardsPage() {
                   ))
                 )}
                 <TableRow>
-                  <TableCell colSpan={7} className="py-2 px-4 border-t">
+                  <TableCell colSpan={8} className="py-2 px-4 border-t">
                     <Link 
                       href="/editor" 
                       className="flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors py-1"
@@ -488,8 +453,20 @@ export default function NotionStyleStoryboardsPage() {
                       <Link href={`/editor?id=${storyboard.id}`} className="font-medium hover:underline">
                         {storyboard.title || 'Storyboard sin título'}
                       </Link>
-                      <div className="text-sm text-gray-500 mt-1">
-                        {storyboard.client?.name || '-'}
+                      <div className="flex justify-between items-center mt-2">
+                        <div className="text-sm text-gray-500">
+                          {storyboard.client?.name || '-'}
+                        </div>
+                        {storyboard.creator && (
+                          <CreatorAvatar 
+                            name={storyboard.creator.name}
+                            size="sm"
+                          />
+                        )}
+                      </div>
+                      <div className="mt-2 flex justify-between">
+                        <PlatformDisplay platforms={storyboard.platforms} />
+                        <AssetCounter assets={storyboard.assets} />
                       </div>
                     </div>
                   ))
@@ -510,8 +487,20 @@ export default function NotionStyleStoryboardsPage() {
                       <Link href={`/editor?id=${storyboard.id}`} className="font-medium hover:underline">
                         {storyboard.title || 'Storyboard sin título'}
                       </Link>
-                      <div className="text-sm text-gray-500 mt-1">
-                        {storyboard.client?.name || '-'}
+                      <div className="flex justify-between items-center mt-2">
+                        <div className="text-sm text-gray-500">
+                          {storyboard.client?.name || '-'}
+                        </div>
+                        {storyboard.creator && (
+                          <CreatorAvatar 
+                            name={storyboard.creator.name}
+                            size="sm"
+                          />
+                        )}
+                      </div>
+                      <div className="mt-2 flex justify-between">
+                        <PlatformDisplay platforms={storyboard.platforms} />
+                        <AssetCounter assets={storyboard.assets} />
                       </div>
                     </div>
                   ))
@@ -528,8 +517,20 @@ export default function NotionStyleStoryboardsPage() {
                       <Link href={`/editor?id=${storyboard.id}`} className="font-medium hover:underline">
                         {storyboard.title || 'Storyboard sin título'}
                       </Link>
-                      <div className="text-sm text-gray-500 mt-1">
-                        {storyboard.client?.name || '-'}
+                      <div className="flex justify-between items-center mt-2">
+                        <div className="text-sm text-gray-500">
+                          {storyboard.client?.name || '-'}
+                        </div>
+                        {storyboard.creator && (
+                          <CreatorAvatar 
+                            name={storyboard.creator.name}
+                            size="sm"
+                          />
+                        )}
+                      </div>
+                      <div className="mt-2 flex justify-between">
+                        <PlatformDisplay platforms={storyboard.platforms} />
+                        <AssetCounter assets={storyboard.assets} />
                       </div>
                     </div>
                   ))
