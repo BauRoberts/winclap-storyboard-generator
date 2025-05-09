@@ -15,536 +15,543 @@ import { useSupabase } from '@/hooks/useSupabase';
 import { LoadingState } from '@/components/LoadingState';
 import AIReorganizationModal from '@/components/editor/AIReorganizationModal';
 
+// Importación dinámica del editor para evitar problemas de SSR
+const RichEditor = dynamic(() => import('@/components/editor/editor'), { ssr: false });
 
-// Tipo para la función de debounce
-type DebouncedFunction = {
-  (...args: any[]): void;
-  cancel: () => void;
-};
-
-// Función mejorada de debounce para evitar importar lodash
-function debounce(func: (...args: any[]) => any, wait: number): DebouncedFunction {
-  let timeout: NodeJS.Timeout | null = null;
-  
-  const debouncedFunction = (...args: any[]) => {
-    if (timeout) clearTimeout(timeout);
-  
-    timeout = setTimeout(() => {
-      func(...args);
-    }, wait);
-  };
-  
-  debouncedFunction.cancel = function() {
-    if (timeout) {
-      clearTimeout(timeout);
-      timeout = null;
-    }
-  };
-  
-  return debouncedFunction;
+// Definir tipos para el hook de autoguardado
+interface AutoSaveOptions {
+  storyboardId: string | null;
+  userId: string | null;
+  saveFunction: () => Promise<any>;
+  initialSaveDelay?: number;
+  regularSaveDelay?: number;
 }
 
-const RichEditor = dynamic(() => import('@/components/editor/editor'), { ssr: false });
+interface AutoSaveResult {
+  status: 'idle' | 'saving' | 'saved' | 'error';
+  lastSaved: Date | null;
+  markDirty: (content: string, stateObj?: Record<string, any>) => void;
+  save: (forceUpdate?: boolean) => Promise<void>;
+}
+
+// Hook personalizado para auto-guardado
+function useAutoSave(options: AutoSaveOptions): AutoSaveResult {
+  const { 
+    storyboardId, 
+    userId, 
+    saveFunction, 
+    initialSaveDelay = 2000, 
+    regularSaveDelay = 2000 
+  } = options;
+  
+  const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  
+  // Referencias para el manejo de cambios y guardado
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const contentRef = useRef<string>('');
+  const isDirtyRef = useRef<boolean>(false);
+  const isSavingRef = useRef<boolean>(false);
+  
+  // Nueva referencia para el hash del estado completo
+  const stateHashRef = useRef<string>('');
+  
+  // Función para generar un hash del estado completo
+  const generateStateHash = useCallback((stateObj: Record<string, any>): string => {
+    // Crear una representación de string del estado completo
+    return JSON.stringify({
+      title: stateObj.title || '',
+      client: stateObj.client || '',
+      creator: stateObj.creator || '',
+      status: stateObj.status || '',
+      platforms: stateObj.platforms || [],
+      assets: stateObj.assets || '',
+      content: stateObj.content || ''
+    });
+  }, []);
+  
+  // Función para guardar contenido
+  const save = useCallback(async (forceUpdate: boolean = false) => {
+    // Permitir guardado forzado aunque isDirty sea false
+    if ((!isDirtyRef.current && !forceUpdate) || isSavingRef.current || !userId) {
+      // Si se solicita guardar forzadamente, pero ya hay un guardado en progreso, lo registramos
+      if (forceUpdate && isSavingRef.current) {
+        console.log("Guardado forzado solicitado pero ya hay un guardado en progreso");
+      }
+      return;
+    }
+    
+    // Establecer estado de guardado
+    isSavingRef.current = true;
+    setStatus('saving');
+    
+    try {
+      // Llamar la función de guardado provista
+      const result = await saveFunction();
+      
+      // Actualizar estado solo si el guardado fue exitoso
+      if (result) {
+        setLastSaved(new Date());
+        setStatus('saved');
+        isDirtyRef.current = false;
+        
+        // Cambiar a estado 'idle' después de un tiempo
+        setTimeout(() => {
+          setStatus('idle');
+        }, 3000);
+      } else {
+        setStatus('error');
+      }
+    } catch (error) {
+      console.error("Error al guardar:", error);
+      setStatus('error');
+    } finally {
+      isSavingRef.current = false;
+    }
+  }, [userId, saveFunction]);
+  
+  // Función para programar guardado
+  const scheduleSave = useCallback((delay = regularSaveDelay) => {
+    // Cancelar cualquier guardado programado existente
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    
+    // Programar nuevo guardado
+    saveTimeoutRef.current = setTimeout(() => {
+      save();
+    }, delay);
+  }, [save, regularSaveDelay]);
+  
+  // Función para marcar cambios mejorada
+  const markDirty = useCallback((content: string, stateObj?: Record<string, any>) => {
+    let isDirty = false;
+    
+    // Si se proporciona stateObj, verificar cambios en todo el estado
+    if (stateObj) {
+      const newStateHash = generateStateHash({
+        ...stateObj,
+        content: content // Incluir el contenido en el hash
+      });
+      
+      // Verificar si el estado ha cambiado
+      if (newStateHash !== stateHashRef.current) {
+        stateHashRef.current = newStateHash;
+        isDirty = true;
+        console.log("Cambios detectados en el estado del storyboard");
+      }
+    } 
+    // Mantener compatibilidad hacia atrás verificando también el contenido directamente
+    else if (content !== contentRef.current) {
+      isDirty = true;
+    }
+    
+    // Si hay cambios, actualizar referencias y programar guardado
+    if (isDirty) {
+      contentRef.current = content;
+      isDirtyRef.current = true;
+      scheduleSave();
+    }
+  }, [scheduleSave, generateStateHash]);
+  
+  // Efecto para guardar al montar (si ya existe un storyboard)
+  useEffect(() => {
+    if (storyboardId && userId && !lastSaved) {
+      // Programar guardado inicial si es un storyboard existente
+      scheduleSave(initialSaveDelay);
+    }
+    
+    // Limpiar al desmontar
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [storyboardId, userId, lastSaved, scheduleSave, initialSaveDelay]);
+  
+  return {
+    status,
+    lastSaved,
+    markDirty,
+    save, // Exponer función para guardado manual
+  };
+}
 
 export default function EditorPage() {
   const { status, data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const storyboardIdParam = searchParams.get('id');
-
-  // Estados generales
-  const [isLoading, setIsLoading] = useState(false);
-  const [isReorganizing, setIsReorganizing] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Estado de UI
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isReorganizing, setIsReorganizing] = useState<boolean>(false);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
   
-  // Estados para Supabase y usuario
-  const { getCurrentUser } = useSupabase();
+  // Estados principales
+  const [storyboardId, setStoryboardId] = useState<string | null>(storyboardIdParam);
   const [userId, setUserId] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [storyboardId, setStoryboardId] = useState<string | undefined>(storyboardIdParam || undefined);
-  
-  // Estados para el modo de vista y contenidos
-  const [editorContent, setEditorContent] = useState<AIContent | null>(null);
+  const [documentTitle, setDocumentTitle] = useState<string>('Storyboard sin título');
   const [freeTextContent, setFreeTextContent] = useState<string>('');
+  const [editorContent, setEditorContent] = useState<AIContent | null>(null);
+  const [htmlContent, setHtmlContent] = useState<string>('');
   
-  // Estados para el modal de reorganización
-  const [isReorganizationModalOpen, setReorganizationModalOpen] = useState(false);
+  // Estados para seleccionables
+  const [selectedClient, setSelectedClient] = useState<string>('');
+  const [selectedPlatform, setSelectedPlatform] = useState<string[]>([]);
+  const [selectedAssets, setSelectedAssets] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('draft');
+  const [selectedCreator, setSelectedCreator] = useState<string>('');
+  
+  // Estado para modal de reorganización
+  const [isReorganizationModalOpen, setReorganizationModalOpen] = useState<boolean>(false);
   const [reorganizedContent, setReorganizedContent] = useState<AIContent | null>(null);
   
-  // Estado para prevenir actualizaciones en cascada
-  const [isUpdating, setIsUpdating] = useState(false);
-
-  // Estados para los selectores
-  const [documentTitle, setDocumentTitle] = useState('Storyboard sin título');
-  const [selectedClient, setSelectedClient] = useState('');
-  const [selectedPlatform, setSelectedPlatform] = useState<string[]>([]);
-  const [selectedAssets, setSelectedAssets] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [selectedCreator, setSelectedCreator] = useState('');
+  // Prevenir actualizaciones mientras se está cargando
+  const isUpdatingRef = useRef<boolean>(false);
   
-  // Estados para autoguardado
-  const [isAutoSaving, setIsAutoSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  // Obtener usuario actual
+  const { getCurrentUser } = useSupabase();
   
-  // Referencias para autoguardado
-  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const pendingChangesRef = useRef<boolean>(false);
-  const contentVersionRef = useRef<number>(0);
-  const initialSaveCompleted = useRef<boolean>(false);
-  
-  // Nuevas referencias para optimización
-  const prevContentRef = useRef<string>('');
-  const prevEditorContentRef = useRef<AIContent | null>(null);
-  const saveInProgressRef = useRef<boolean>(false);
-
-  // Monitorear estado de autoguardado para depuración
-  useEffect(() => {
-    console.log("Editor page mounted, storyboardId:", storyboardId);
-    
-    // Verificar parámetros de URL
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      console.log("URL params:", Object.fromEntries(urlParams.entries()));
-    }
-    
-    return () => {
-      console.log("Editor page unmounting");
-    };
-  }, []);
-
-  // Guardar o actualizar el storyboard (guardado manual)
-  const saveStoryboard = async (includeAIContent = false, customAIContent?: AIContent) => {
+  const saveStoryboard = useCallback(async (includeAIContent: boolean = false, customAIContent?: AIContent) => {
     if (!userId) {
-      console.error("No hay un usuario autenticado o ID de usuario no disponible");
-      setError("No se pudo obtener el ID de usuario. Por favor, recarga la página e intenta nuevamente.");
+      console.log("No hay un usuario autenticado");
       return null;
     }
     
-    if (!includeAIContent && autoSaveStatus === 'saving') {
-      console.log("Guardado manual ignorado, hay un autoguardado en progreso");
-      return storyboardId;
-    }
-    
-    const isManuallySaving = !isAutoSaving;
-    if (isManuallySaving) setIsSaving(true);
-    console.log(`Tipo de guardado: ${isManuallySaving ? 'manual' : 'automático'}`);
-    
     try {
+      // Preparar datos del storyboard
       const storyboardData = {
         title: documentTitle,
         client_id: selectedClient || null,
         creator_id: selectedCreator || null,
         status: selectedStatus || 'draft',
-        original_content: freeTextContent,
+        original_content: htmlContent, // Usar HTML en lugar de texto plano
         platforms: selectedPlatform,
         assets: selectedAssets,
         created_by: userId
       };
       
-      // Verificar si algún campo del contenido AI tiene datos
+      // Determinar qué contenido AI usar
       let aiContentToSave: AIContent | undefined = undefined;
       
       if (includeAIContent) {
-        // Usar el contenido personalizado si se proporciona, de lo contrario usar editorContent
-        aiContentToSave = customAIContent || (editorContent || undefined);
-        
-        if (aiContentToSave !== null && aiContentToSave !== undefined) {
-          const hasContent = Object.values(aiContentToSave).some(
-            val => val && typeof val === 'string' && val.trim() !== ''
-          );
-          
-          if (!hasContent) {
-            console.log("Contenido AI está vacío, no se incluirá");
-            aiContentToSave = undefined;
-          }
+        // Usar customAIContent si está disponible, sino editorContent
+        if (customAIContent) {
+          aiContentToSave = customAIContent;
+        } else if (editorContent) {
+          aiContentToSave = editorContent;
         }
       }
       
-      let savedStoryboardId;
+      let result;
       
       if (storyboardId) {
-        // Actualizar
-        console.log("Actualizando storyboard existente ID:", storyboardId);
-        const updatedStoryboard = await updateStoryboard(storyboardId, storyboardData, aiContentToSave);
-        console.log("Storyboard actualizado:", updatedStoryboard);
-        savedStoryboardId = storyboardId;
+        // Actualizar storyboard existente
+        console.log("Actualizando storyboard:", storyboardId);
+        result = await updateStoryboard(storyboardId, storyboardData, aiContentToSave);
       } else {
-        // Crear nuevo
+        // Crear nuevo storyboard
         console.log("Creando nuevo storyboard");
+        result = await createStoryboard(storyboardData, aiContentToSave);
         
-        try {
-          const newStoryboard = await createStoryboard(storyboardData, aiContentToSave);
-          console.log("Storyboard creado exitosamente:", newStoryboard);
-          savedStoryboardId = newStoryboard.id;
-          setStoryboardId(savedStoryboardId);
+        // Actualizar ID y URL
+        if (result && result.id) {
+          setStoryboardId(result.id);
           
-          // Actualizar la URL sin recargar la página
-          if (typeof window !== 'undefined') {
-            const url = new URL(window.location.href);
-            url.searchParams.set('id', savedStoryboardId ?? '');
-            window.history.replaceState({}, '', url.toString());
-          }
-          
-          initialSaveCompleted.current = true;
-        } catch (createError) {
-          console.error("Error detallado al crear storyboard:", createError);
-          
-          if (createError instanceof Error) {
-            console.error("Error message:", createError.message);
-            console.error("Error stack:", createError.stack);
-            setError(`Error al crear storyboard: ${createError.message}`);
-          } else {
-            console.error("Tipo de error desconocido:", typeof createError);
-            setError('Error desconocido al crear storyboard');
-          }
-          
-          return null;
+          // Actualizar URL sin recargar
+          const url = new URL(window.location.href);
+          url.searchParams.set('id', result.id);
+          window.history.replaceState({}, '', url.toString());
         }
       }
       
-      console.log("Storyboard guardado con ID:", savedStoryboardId);
-      return savedStoryboardId;
+      return result;
     } catch (err) {
-      console.error("Error general en saveStoryboard:", err);
-      
-      // Mejorar el logging para capturar mejor el tipo de error
-      if (err instanceof Error) {
-        console.error("Error message:", err.message);
-        console.error("Error stack:", err.stack);
-        setError(`Error al guardar: ${err.message}`);
-      } else {
-        console.error("Unknown error type:", typeof err);
-        console.error("Error details:", JSON.stringify(err, null, 2));
-        setError('Error desconocido al guardar el storyboard');
-      }
-      
+      console.error("Error al guardar storyboard:", err);
+      setError(err instanceof Error ? err.message : 'Error desconocido');
       return null;
-    } finally {
-      if (isManuallySaving) setIsSaving(false);
-      console.log("Proceso de guardado finalizado");
     }
-  };
-
-  // Función de autoguardado silencioso mejorada
-  const debouncedAutoSave = useCallback(
-    debounce(async () => {
-      // Evitar guardados redundantes o cuando hay una operación en curso
-      if (!pendingChangesRef.current || !userId || saveInProgressRef.current) {
-        console.log("Autoguardado cancelado: no hay cambios pendientes, sin usuario o guardado en progreso");
-        return;
-      }
-      
-      const currentVersion = contentVersionRef.current;
-      console.log(`Iniciando autoguardado silencioso (versión ${currentVersion})...`);
-      
-      // Marcar que hay un guardado en progreso
-      saveInProgressRef.current = true;
-      setIsAutoSaving(true);
-      setAutoSaveStatus('saving');
-      
-      try {
-        if (currentVersion === contentVersionRef.current) {
-          setLastSaved(new Date());
-          setAutoSaveStatus('saved');
-          pendingChangesRef.current = false;
-          console.log(`Autoguardado completado (versión ${currentVersion})`);
-          
-          // Ocultar el indicador de "guardado" después de un tiempo
-          setTimeout(() => {
-            if (autoSaveStatus === 'saved') {
-              setAutoSaveStatus('idle');
-            }
-          }, 3000);
-        } else {
-          console.log(`Ignorando resultado de autoguardado antiguo (versión ${currentVersion}, actual ${contentVersionRef.current})`);
-        }
-      } catch (error) {
-        console.error("Error en autoguardado:", error);
-        setAutoSaveStatus('error');
-      } finally {
-        saveInProgressRef.current = false;
-        setIsAutoSaving(false);
-      }
-    }, 2000), // Reducir a 2 segundos para mejor experiencia
-    [userId, saveStoryboard, autoSaveStatus]
-  );
-
-  // Función mejorada para marcar cambios pendientes
-  const markPendingChanges = useCallback(() => {
-    // Verificar si hay cambios reales comparando con la versión anterior
-    const contentChanged = prevContentRef.current !== freeTextContent;
-    const editorContentChanged = JSON.stringify(prevEditorContentRef.current) !== JSON.stringify(editorContent);
-    
-    if (contentChanged || editorContentChanged) {
-      console.log("Cambios reales detectados, marcando como pendientes...");
-      pendingChangesRef.current = true;
-      contentVersionRef.current += 1;
-      
-      // Actualizar las referencias con el nuevo contenido
-      prevContentRef.current = freeTextContent;
-      prevEditorContentRef.current = editorContent ? { ...editorContent } : null;
-      
-      if (autoSaveStatus === 'saved') {
-        setAutoSaveStatus('idle');
-      }
-      
-      // Programar autoguardado mediante debounce
-      debouncedAutoSave();
-    } else {
-      console.log("No se detectaron cambios reales, ignorando");
-    }
-  }, [freeTextContent, editorContent, debouncedAutoSave, autoSaveStatus]);
-
-  // Obtener el ID del usuario actual
+  }, [
+    userId, documentTitle, selectedClient, selectedCreator, 
+    selectedStatus, htmlContent, selectedPlatform, 
+    selectedAssets, editorContent, storyboardId
+  ]);
+  
+  // Configurar auto-guardado
+  const { status: autoSaveStatus, lastSaved, markDirty, save } = useAutoSave({
+    storyboardId,
+    userId,
+    saveFunction: () => saveStoryboard(false),
+    initialSaveDelay: 5000,  // Esperar 5s para el primer guardado
+    regularSaveDelay: 2000   // Guardar cada 2s después de cambios
+  });
+  
+  // Obtener user ID
   useEffect(() => {
-    const fetchUserId = async () => {
-      if (session?.user) {
+    if (status === 'authenticated' && session?.user) {
+      const fetchUserId = async () => {
         try {
-          console.log("Obteniendo usuario actual con sesión:", session.user.email);
           const user = await getCurrentUser();
-          console.log("Usuario obtenido de Supabase:", user);
-          
-          if (user) {
-            console.log("ID de usuario establecido:", user.id);
+          if (user && user.id) {
             setUserId(user.id);
-          } else {
-            console.error("getCurrentUser() devolvió null o undefined");
           }
         } catch (error) {
-          console.error("Error al obtener el usuario actual:", error);
+          console.error("Error al obtener usuario:", error);
         }
-      } else {
-        console.log("No hay sesión de usuario disponible");
-      }
-    };
-    
-    if (status === 'authenticated') {
+      };
+      
       fetchUserId();
     }
-  }, [session, getCurrentUser, status]);
-
-  // Cargar storyboard existente si hay un ID
+  }, [status, session, getCurrentUser]);
+  
+  // Cargar storyboard existente (UNA SOLA VEZ)
   useEffect(() => {
-    const isNewStoryboard = !storyboardId; // Define isNewStoryboard based on storyboardId
-
-    const loadExistingStoryboard = async () => {
-      if (storyboardId) {
-        setIsLoading(true);
-        try {
-          console.log("Cargando storyboard existente ID:", storyboardId);
-          const storyboard = await getStoryboard(storyboardId);
-          console.log("Storyboard cargado:", storyboard);
-          
-          // Añadir más logs aquí para ver qué contiene el storyboard
-          console.log("Contenido original:", storyboard.original_content ? 
-            storyboard.original_content.substring(0, 50) + "..." : "No hay contenido");
-          
-          // Establecer los valores del formulario
-          setDocumentTitle(storyboard.title);
-          setSelectedClient(storyboard.client_id || '');
-          setSelectedCreator(storyboard.creator_id || '');
-          setSelectedPlatform(storyboard.platforms || []);
-          setSelectedAssets(storyboard.assets || '');
-          setSelectedStatus(storyboard.status || '');
-          
-          // Establecer el contenido original si existe
-          if (storyboard.original_content) {
+    if (!storyboardId || isInitialized || !userId) {
+      // Si no hay ID, ya se inicializó, o no hay usuario, no cargar
+      if (!storyboardId && !isInitialized) {
+        setIsLoading(false);
+        setIsInitialized(true);
+      }
+      return;
+    }
+    
+    const loadStoryboard = async () => {
+      try {
+        console.log("Cargando storyboard:", storyboardId);
+        const storyboard = await getStoryboard(storyboardId);
+        
+        // Configurar estados con datos del storyboard
+        setDocumentTitle(storyboard.title || 'Storyboard sin título');
+        setSelectedClient(storyboard.client_id || '');
+        setSelectedCreator(storyboard.creator_id || '');
+        setSelectedPlatform(storyboard.platforms || []);
+        setSelectedAssets(storyboard.assets || '');
+        setSelectedStatus(storyboard.status || 'draft');
+        
+        // Configurar contenido - guardar el HTML para preservar estilos
+        if (storyboard.original_content) {
+          // Si parece HTML, guardarlo como tal
+          if (storyboard.original_content.trim().startsWith('<') && 
+              storyboard.original_content.includes('</')) {
+            setHtmlContent(storyboard.original_content);
+            
+            // También extraer texto plano para compatibilidad
+            // Usa un enfoque simple, se puede mejorar si es necesario
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = storyboard.original_content;
+            setFreeTextContent(tempDiv.textContent || tempDiv.innerText || '');
+          } else {
+            // Si no parece HTML, tratarlo como texto plano
             setFreeTextContent(storyboard.original_content);
-            prevContentRef.current = storyboard.original_content;
-            
-            // Intentar parsear como JSON por si es un objeto AIContent
-            try {
-              const parsedContent = JSON.parse(storyboard.original_content);
-              if (parsedContent && typeof parsedContent === 'object') {
-                setEditorContent(parsedContent as AIContent);
-                prevEditorContentRef.current = { ...parsedContent as AIContent };
-              }
-            } catch {
-              // Si no se puede parsear, es solo texto plano
-              console.log("El contenido original no es JSON");
-            }
+            setHtmlContent(`<p>${storyboard.original_content}</p>`);
           }
-          
-          // Establecer el contenido AI si existe
-          if (storyboard.ai_content) {
-            setReorganizedContent(storyboard.ai_content as AIContent);
-            
-            // Si no hay contenido válido, usar el AI como contenido actual
-            if (!editorContent || Object.keys(editorContent).filter(k => !!editorContent[k]).length === 0) {
-              setEditorContent(storyboard.ai_content as AIContent);
-              prevEditorContentRef.current = { ...storyboard.ai_content as AIContent };
-            }
-          }
-          
-          // Marcar como último guardado
-          setLastSaved(new Date());
-          setAutoSaveStatus('saved');
-          initialSaveCompleted.current = true;
-          
-        } catch (err) {
-          console.error("Error loading storyboard:", err);
-          setError(err instanceof Error ? err.message : 'Error inesperado');
-        } finally {
-          setIsLoading(false);
         }
+        
+        // Configurar contenido AI si existe
+        if (storyboard.ai_content) {
+          setReorganizedContent(storyboard.ai_content);
+          
+          // Si no hay contenido normal, usar el AI
+          if (!storyboard.original_content) {
+            setEditorContent(storyboard.ai_content);
+          }
+        }
+        
+        console.log("Storyboard cargado correctamente");
+      } catch (err) {
+        console.error("Error al cargar storyboard:", err);
+        setError(err instanceof Error ? err.message : 'Error inesperado');
+      } finally {
+        setIsLoading(false);
+        setIsInitialized(true);
       }
     };
     
-    // Solo cargar si hay un ID de storyboard y NO es un nuevo storyboard
-    if (storyboardId && !isNewStoryboard) {
-      loadExistingStoryboard();
-    }
-  }, [storyboardId, editorContent]);
-
-  // Inicializar las referencias cuando se carga el componente
-  useEffect(() => {
-    // Inicializar las referencias cuando se carga el componente
-    if (freeTextContent && !prevContentRef.current) {
-      prevContentRef.current = freeTextContent;
-    }
+    setIsLoading(true);
+    loadStoryboard();
+  }, [storyboardId, isInitialized, userId, getCurrentUser]);
+  
+  // Manejar cambios en el editor
+  const handleEditorChange = useCallback((json: AIContent, text: string, html: string) => {
+    if (isUpdatingRef.current) return;
     
-    if (editorContent && !prevEditorContentRef.current) {
-      prevEditorContentRef.current = { ...editorContent };
-    }
-  }, [freeTextContent, editorContent]);
-
-  // Limpiar temporizador al desmontar
-  useEffect(() => {
-    return () => {
-      const timer = autoSaveTimerRef.current;
-      if (timer) {
-        clearTimeout(timer);
-      }
-      debouncedAutoSave.cancel();
-    };
-  }, [debouncedAutoSave]);
+    isUpdatingRef.current = true;
+    setEditorContent(json);
+    setFreeTextContent(text);
+    setHtmlContent(html); // Nuevo: Guardar contenido HTML
+    
+    // Marcar como modificado para guardado automático incluyendo todo el estado
+    markDirty(html, {
+      title: documentTitle,
+      client: selectedClient,
+      creator: selectedCreator,
+      status: selectedStatus,
+      platforms: selectedPlatform,
+      assets: selectedAssets,
+      content: html
+    });
+    
+    // Permitir actualizaciones después de un tiempo
+    setTimeout(() => {
+      isUpdatingRef.current = false;
+    }, 100);
+  }, [markDirty, documentTitle, selectedClient, selectedCreator, selectedStatus, selectedPlatform, selectedAssets]);
   
-
-  useEffect(() => {
-    // Recuperar contenido del localStorage si existe y no hay storyboardId
-    if (typeof window !== 'undefined' && !storyboardId && !freeTextContent) {
-      const savedContent = localStorage.getItem('draft_content');
-      if (savedContent) {
-        console.log("Recuperando borrador guardado localmente");
-        setFreeTextContent(savedContent);
-        prevContentRef.current = savedContent;
-      }
-    }
-  }, [storyboardId, freeTextContent]);
-  
-  // Guardar contenido en localStorage cuando cambia
-  useEffect(() => {
-    // Guardar contenido en localStorage
-    if (typeof window !== 'undefined' && freeTextContent && freeTextContent.trim() !== '') {
-      localStorage.setItem('draft_content', freeTextContent);
-      console.log("Guardando borrador localmente");
-    }
-  }, [freeTextContent]);
-
-  // Handlers de cambio con logging
-  const handleClientChange = (value: string) => {
-    console.log('EditorPage - Cliente seleccionado:', value);
-    setSelectedClient(value);
-    markPendingChanges();
-  };
-
-  const handleAssetsChange = (value: string) => {
-    console.log('EditorPage - Assets seleccionados:', value);
-    setSelectedAssets(value);
-    markPendingChanges();
-  };
-
-  const handlePlatformChange = (values: string[]) => {
-    console.log('EditorPage - Plataformas seleccionadas:', values);
-    setSelectedPlatform(values);
-    markPendingChanges();
-  };
-
-  const handleStatusChange = (value: string) => {
-    console.log('EditorPage - Estado seleccionado:', value);
-    setSelectedStatus(value);
-    markPendingChanges();
-  };
-
-  const handleCreatorChange = (value: string) => {
-    console.log('EditorPage - Creador seleccionado:', value);
-    setSelectedCreator(value);
-    markPendingChanges();
-  };
-
-  const handleTitleChange = (value: string) => {
+  // Manejar cambio de título
+  const handleTitleChange = useCallback((value: string) => {
     setDocumentTitle(value);
-    markPendingChanges();
-  };
-
-  // Nuevo flujo: Reorganizar con IA => Modal
+    
+    // Pasar todo el estado para detectar cambios
+    markDirty(htmlContent, {
+      title: value, // Usar el nuevo valor
+      client: selectedClient,
+      creator: selectedCreator,
+      status: selectedStatus,
+      platforms: selectedPlatform,
+      assets: selectedAssets,
+      content: htmlContent
+    });
+  }, [markDirty, htmlContent, selectedClient, selectedCreator, selectedStatus, selectedPlatform, selectedAssets]);
+  
+  // Otros manejadores de cambio - actualizar para considerar todo el estado
+  const handleClientChange = useCallback((value: string) => {
+    setSelectedClient(value);
+    
+    markDirty(htmlContent, {
+      title: documentTitle,
+      client: value, // Usar el nuevo valor
+      creator: selectedCreator,
+      status: selectedStatus,
+      platforms: selectedPlatform,
+      assets: selectedAssets,
+      content: htmlContent
+    });
+  }, [markDirty, htmlContent, documentTitle, selectedCreator, selectedStatus, selectedPlatform, selectedAssets]);
+  
+  const handlePlatformChange = useCallback((values: string[]) => {
+    setSelectedPlatform(values);
+    
+    markDirty(htmlContent, {
+      title: documentTitle,
+      client: selectedClient,
+      creator: selectedCreator,
+      status: selectedStatus,
+      platforms: values, // Usar el nuevo valor
+      assets: selectedAssets,
+      content: htmlContent
+    });
+  }, [markDirty, htmlContent, documentTitle, selectedClient, selectedCreator, selectedStatus, selectedAssets]);
+  
+  const handleAssetsChange = useCallback((value: string) => {
+    setSelectedAssets(value);
+    
+    markDirty(htmlContent, {
+      title: documentTitle,
+      client: selectedClient,
+      creator: selectedCreator,
+      status: selectedStatus,
+      platforms: selectedPlatform,
+      assets: value, // Usar el nuevo valor
+      content: htmlContent
+    });
+  }, [markDirty, htmlContent, documentTitle, selectedClient, selectedCreator, selectedStatus, selectedPlatform]);
+  
+  const handleStatusChange = useCallback((value: string) => {
+    setSelectedStatus(value);
+    
+    markDirty(htmlContent, {
+      title: documentTitle,
+      client: selectedClient,
+      creator: selectedCreator,
+      status: value, // Usar el nuevo valor
+      platforms: selectedPlatform,
+      assets: selectedAssets,
+      content: htmlContent
+    });
+  }, [markDirty, htmlContent, documentTitle, selectedClient, selectedCreator, selectedPlatform, selectedAssets]);
+  
+  const handleCreatorChange = useCallback((value: string) => {
+    setSelectedCreator(value);
+    
+    markDirty(htmlContent, {
+      title: documentTitle,
+      client: selectedClient,
+      creator: value, // Usar el nuevo valor
+      status: selectedStatus,
+      platforms: selectedPlatform,
+      assets: selectedAssets,
+      content: htmlContent
+    });
+  }, [markDirty, htmlContent, documentTitle, selectedClient, selectedStatus, selectedPlatform, selectedAssets]);
+  
+  // Manejar reorganización con IA
   const handleReorganizeWithAI = async () => {
+    if (!freeTextContent.trim()) {
+      setError('El contenido está vacío. Por favor, añade algún texto antes de reorganizar.');
+      return;
+    }
+    
     setIsReorganizing(true);
     setError(null);
     
     try {
-      // Guardar el storyboard antes de reorganizar
-      const savedStoryboardId = await saveStoryboard();
-      console.log("Storyboard guardado con ID:", savedStoryboardId);
+      // Guardar primero (forzando el guardado)
+      await save(true);
       
-      if (!savedStoryboardId) {
+      if (!storyboardId) {
         throw new Error('Error al guardar el storyboard');
       }
       
-      // Continuar con la reorganización
-      console.log("Enviando solicitud a /api/reorganize-content");
+      // Solicitar reorganización
       const response = await fetch('/api/reorganize-content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           text: freeTextContent,
-          storyboardId: savedStoryboardId
+          storyboardId: storyboardId
         }),
       });
-  
-      console.log("Respuesta recibida, status:", response.status);
+      
       const result = await response.json();
-      console.log("Resultado:", result.success ? "Éxito" : "Error");
       
       if (!response.ok || !result.success) {
-        const errorMsg = result.error || 'Error desconocido al reorganizar contenido';
-        console.error("Error en la respuesta:", errorMsg);
-        throw new Error(errorMsg);
+        throw new Error(result.error || 'Error al reorganizar contenido');
       }
-  
-      // Establecer el contenido reorganizado y abrir el modal
+      
+      // Establecer contenido reorganizado y abrir modal
       setReorganizedContent(result.aiContent);
       setReorganizationModalOpen(true);
-      
     } catch (err) {
-      console.error("Error detallado reorganizando:", err);
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      console.error("Error al reorganizar:", err);
+      setError(err instanceof Error ? err.message : 'Error inesperado');
     } finally {
       setIsReorganizing(false);
     }
   };
   
-  // Generar slides desde el modal con fetch
+  // Generar slides
   const handleGenerateSlides = async (content: AIContent) => {
     setIsGenerating(true);
     setError(null);
     
     try {
-      // Guardar el storyboard con el contenido final
-      const savedStoryboardId = await saveStoryboard(true, content);
+      // Guardar con contenido AI (forzando el guardado)
+      await saveStoryboard(true, content);
       
-      if (!savedStoryboardId) {
+      if (!storyboardId) {
         throw new Error('Error al guardar el storyboard');
       }
       
-      // Generar slides con el contenido elegido
+      // Generar slides
       const response = await fetch('/api/generate-slides', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          storyboardId: savedStoryboardId,
+          storyboardId,
           aiContent: content,
           cliente: selectedClient,
           plataforma: selectedPlatform,
@@ -554,16 +561,19 @@ export default function EditorPage() {
           title: documentTitle,
         }),
       });
-  
+      
       const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.error || 'Error al generar Slides');
-  
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Error al generar Slides');
+      }
+      
+      // Guardar resultado y redirigir
       localStorage.setItem('storyboardResult', JSON.stringify({
         ...result,
-        storyboardId: savedStoryboardId
+        storyboardId
       }));
       
-      // Cerrar el modal y redireccionar
       setReorganizationModalOpen(false);
       router.push('/result');
     } catch (err) {
@@ -572,19 +582,21 @@ export default function EditorPage() {
       setIsGenerating(false);
     }
   };
-
+  
+  // Manejo de estado de sesión
   if (status === 'loading' || isLoading) {
     return <LoadingState />;
   }
-
+  
   if (status === 'unauthenticated') {
     router.push('/');
     return null;
   }
-
+  
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <div className="flex-1 flex flex-col">
+        {/* Topbar con propiedades */}
         <EditorTopbar
           title={documentTitle}
           onTitleChange={handleTitleChange}
@@ -599,7 +611,8 @@ export default function EditorPage() {
           creator={selectedCreator}
           onCreatorChange={handleCreatorChange}
         />
-
+        
+        {/* Alerta de error */}
         {error && (
           <div className="max-w-[900px] mx-auto px-6 mb-4">
             <Alert variant="destructive">
@@ -609,29 +622,17 @@ export default function EditorPage() {
             </Alert>
           </div>
         )}
-
+        
+        {/* Editor de texto */}
         <div className="flex-1">
-          <RichEditor
-            initialContent={freeTextContent || (editorContent || emptyAIContent)}
-            onChange={(json, text) => {
-              if (isUpdating) return;
-              
-              console.log("Cambio en editor simple");
-              setIsUpdating(true);
-              setEditorContent(json);
-              setFreeTextContent(text);
-              
-              setTimeout(() => {
-                setIsUpdating(false);
-                // Llamar a markPendingChanges directamente
-                markPendingChanges();
-              }, 100);
-            }}
-            key={`editor-${storyboardId || 'new'}`}
-          />
+        <RichEditor
+          initialContent={htmlContent || freeTextContent || editorContent || emptyAIContent}
+          onChange={handleEditorChange}
+          key={`editor-${isInitialized ? (storyboardId || 'new') : 'loading'}`}
+        />
         </div>
       </div>
-
+      
       {/* Modal de reorganización */}
       <AIReorganizationModal
         isOpen={isReorganizationModalOpen}
@@ -639,41 +640,32 @@ export default function EditorPage() {
         aiContent={reorganizedContent}
         isGenerating={isGenerating}
         onGenerate={handleGenerateSlides}
-        onEdit={(json, _text) => {
-          // Actualizar el contenido reorganizado cuando se edita
-          setReorganizedContent(json);
-        }}
+        onEdit={(json: AIContent) => setReorganizedContent(json)}
       />
-
-      <div className="relative">
-        <FloatingButtons
-          onReorganize={async () => {
-            await handleReorganizeWithAI();
-          }}
-          onSave={async () => {
-            await saveStoryboard(true);
-            setAutoSaveStatus('saved');
-            setLastSaved(new Date());
-          }}
-          isReorganizing={isReorganizing}
-          isSaving={isSaving}
-          charactersCount={freeTextContent.length}
-          disabled={{
-            reorganize: !freeTextContent.trim() || isGenerating || isSaving,
-            save: isReorganizing || isGenerating
-          }}
-          autoSaveStatus={autoSaveStatus}
-          lastSaved={lastSaved}
-          // No mostrar el botón de guardar ya que implementamos autoguardado optimizado
-          showSaveButton={false}
-        />
-        
-        {/* Componente de notificación de autoguardado mejorado */}
-        <AutoSaveNotification 
-          status={autoSaveStatus} 
-          lastSaved={lastSaved} 
-        />
-      </div>                        
+      
+      {/* Botones flotantes */}
+      <FloatingButtons
+        onReorganize={handleReorganizeWithAI}
+        onSave={async () => {
+          // Forzar el guardado independientemente del estado dirty
+          await save(true);
+        }}
+        isReorganizing={isReorganizing}
+        charactersCount={freeTextContent.length}
+        disabled={{
+          reorganize: !freeTextContent.trim() || isGenerating,
+          save: isReorganizing || isGenerating
+        }}
+        autoSaveStatus={autoSaveStatus}
+        lastSaved={lastSaved}
+        showSaveButton={true} // Permitir guardado manual
+      />
+      
+      {/* Notificación de autoguardado */}
+      <AutoSaveNotification 
+        status={autoSaveStatus} 
+        lastSaved={lastSaved} 
+      />
     </div>
   );
 }

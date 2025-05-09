@@ -1,4 +1,4 @@
-// Actualización para src/components/editor/editor.tsx
+// src/components/editor/editor.tsx
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -52,7 +52,7 @@ interface EditorJSON {
 // Definir explícitamente las props que recibe RichEditor
 interface RichEditorProps {
   initialContent: AIContent | string;
-  onChange: (json: AIContent, text: string) => void;
+  onChange: (json: AIContent, text: string, html: string) => void; // Modificado para incluir HTML
 }
 
 interface DocContent {
@@ -131,9 +131,10 @@ const RichEditor: React.FC<RichEditorProps> = ({ initialContent, onChange }) => 
       
       const json = editor.getJSON() as EditorJSON;
       const text = editor.getText();
+      const html = editor.getHTML(); // Obtener HTML para preservar estilos
       
       if (onChange && isInitialized) {
-        onChange(parseEditorContent(json), text);
+        onChange(parseEditorContent(json), text, html);
       }
     },
     // Esto resuelve el error de SSR
@@ -143,11 +144,10 @@ const RichEditor: React.FC<RichEditorProps> = ({ initialContent, onChange }) => 
   // Guardar la referencia del editor
   useEffect(() => {
     if (editor) {
-      // Corrección: necesitamos definir el tipo de editorInstanceRef
-      // La solución es especificar el tipo correcto en la declaración del useRef
       editorInstanceRef.current = editor;
     }
   }, [editor]);
+  
   // Inicializar contenido solo una vez cuando el editor está listo
   useEffect(() => {
     if (editor && !isInitialized) {
@@ -162,7 +162,14 @@ const RichEditor: React.FC<RichEditorProps> = ({ initialContent, onChange }) => 
       if (typeof initialContentRef.current === 'string') {
         const strContent = initialContentRef.current as string;
         if (strContent && strContent.trim() !== '') {
-          editor.commands.setContent(`<p>${strContent}</p>`);
+          // Verificar si parece ser HTML
+          if (strContent.trim().startsWith('<') && strContent.includes('</')) {
+            // Es HTML, usarlo directamente
+            editor.commands.setContent(strContent);
+          } else {
+            // Es texto plano, envolverlo en párrafo
+            editor.commands.setContent(`<p>${strContent}</p>`);
+          }
         }
       } else {
         // Es un objeto AIContent
@@ -206,7 +213,6 @@ export default RichEditor;
 
 // Funciones auxiliares
 function formatAsDoc(data: AIContent): DocStructure {
-  // (código existente)
   const sections = [
     {
       heading: 'Briefing Storyboard',
@@ -298,7 +304,6 @@ function formatAsDoc(data: AIContent): DocStructure {
 }
 
 function parseEditorContent(doc: EditorJSON): AIContent {
-  // (código existente)
   const text = doc.content?.flatMap((block) => {
     return block.content?.map((c) => c.text) || [];
   }).join('\n') || '';

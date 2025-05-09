@@ -276,3 +276,111 @@ Hemos desarrollado una plataforma interna para que los Content Partner Analysts 
 - Mejoras en feedback visual durante los procesos de generación
 - Dashboard con estadísticas de uso por cliente
 - Colaboración en tiempo real para trabajo en equipo
+
+
+
+---------------------
+
+🪄 Winclap Storyboard Generator - Descripción Actualizada
+Contexto del Proyecto
+El Winclap Storyboard Generator es una plataforma interna desarrollada para Content Partner Analysts de Winclap, que permite generar storyboards completos para creadores y clientes con asistencia de IA (Claude de Anthropic) y automatización a través de Google Slides API.
+Evolución y Estado Actual
+La plataforma ha evolucionado desde un enfoque inicial con formularios estructurados hacia un editor de texto estilo Notion con reorganización inteligente de contenido, manteniendo la potencia de generación automática de storyboards.
+Fases de Desarrollo Completadas
+
+Base de Datos y Autenticación
+
+Implementación de esquema en Supabase con entidades clave
+Integración de NextAuth con Google OAuth para autenticación segura
+
+
+Editor TipTap y Flujo de Usuario
+
+Implementación del editor con extensiones avanzadas (slash commands, tipografía, etc.)
+Mejora de la UX con sistema de autoguardado estilo Notion
+
+
+Reorganización con IA y Generación de Slides
+
+Nuevo flujo modal para reorganización de contenido con Claude
+Integración con Google Slides API para creación automática de presentaciones
+
+
+
+Tecnologías Implementadas
+Frontend
+
+Next.js 15 con App Router
+TipTap como editor avanzado tipo Notion
+Tailwind CSS con shadcn/ui para componentes
+React Hook Form + Zod para validación
+
+Backend
+
+API routes de Next.js
+Anthropic API (Claude) para IA
+Google Slides API para presentaciones
+
+Flujo de Datos
+
+Usuario ingresa texto libre en el editor TipTap
+Al reorganizar, Claude procesa y estructura el contenido
+El contenido procesado se guarda en Supabase
+Al generar, se crea una presentación en Google Slides
+
+Características Clave
+
+Editor Avanzado Tipo Notion
+
+Slash commands para acceder rápidamente a plantillas y formatos
+Barra flotante de formato al seleccionar texto
+Soporte para markdown y atajos de teclado
+
+
+Procesamiento IA para Mejorar Briefings
+
+Conversión de texto libre a formato estructurado para storyboards
+Inferencia inteligente de datos faltantes
+Validación automática de campos requeridos
+
+
+Gestión de Datos
+
+Clientes y creadores de contenido organizados en tablas
+Histórico de storyboards con vistas de detalle
+Interfaz de búsqueda y filtrado
+
+
+UI/UX Optimizada
+
+Diseño limpio estilo Notion con modo oscuro
+Navegación intuitiva con sidebar colapsable
+Vistas responsivas para desktop y mobile
+
+
+
+Mejoras Recientes
+
+Flujo Modal de Reorganización
+
+Reemplazo del sistema de vista dual por un modal más intuitivo
+Mejor persistencia de datos entre el contenido original y reorganizado
+Reducción de problemas de sincronización de estados
+
+
+Integración Mejorada con Supabase
+
+Funciones de conversión entre camelCase (frontend) y snake_case (base de datos)
+Corrección de problemas de tipado en TypeScript
+Manejo optimizado de estados en el editor
+
+
+Navegación y Experiencia de Usuario
+
+Implementación de breadcrumbs para mejorar la navegación
+Sistema de notificaciones para acciones importantes
+Mejoras en la página de resultados con opciones de compartir
+
+
+
+Esta plataforma representa un flujo de trabajo optimizado para la creación de storyboards, desde la entrada de texto libre hasta la generación de presentaciones profesionales, con asistencia de IA en cada paso del proceso.

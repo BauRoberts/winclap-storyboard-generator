@@ -1,7 +1,6 @@
-//src/components/editor/PillSelector.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -39,6 +38,9 @@ export default function PillSelector({
   const [isOpen, setIsOpen] = useState(false);
   const selected = options.find(opt => opt.id === value);
   const styleClass = selected ? colorClasses[color] : colorClasses.default;
+  
+  // Referencia al contenedor del componente para detectar clics fuera
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleSelect = (optionId: string) => {
     if (typeof onChange === 'function') {
@@ -54,23 +56,28 @@ export default function PillSelector({
 
   // Cerrar dropdown al hacer clic fuera
   useEffect(() => {
-    const handleClickOutside = (_event: MouseEvent) => {
-      if (isOpen) {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Solo cerrar si el clic fue fuera del componente y el menú está abierto
+      if (isOpen && containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
     
-    document.addEventListener('mousedown', handleClickOutside);
+    // Solo agregar el event listener si el menú está abierto
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       {/* Trigger button */}
       <div
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !isLoading && setIsOpen(!isOpen)}
         className={cn(
           'inline-flex items-center px-2 py-1 rounded text-xs cursor-pointer transition-colors',
           isLoading ? 'opacity-50 cursor-not-allowed' : '',
@@ -94,10 +101,7 @@ export default function PillSelector({
             <div
               key={option.id}
               className="text-xs py-1.5 px-2 cursor-pointer hover:bg-gray-100"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleSelect(option.id);
-              }}
+              onClick={() => handleSelect(option.id)}
             >
               {option.name}
             </div>
@@ -108,8 +112,7 @@ export default function PillSelector({
               <div className="border-t border-gray-100 my-1"></div>
               <div
                 className="text-xs py-1.5 px-2 cursor-pointer hover:bg-gray-100 text-blue-600"
-                onClick={(e) => {
-                  e.stopPropagation();
+                onClick={() => {
                   setIsOpen(false);
                   onAddNew();
                 }}

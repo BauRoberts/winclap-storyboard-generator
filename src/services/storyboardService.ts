@@ -41,38 +41,68 @@ export async function getStoryboards() {
 }
 
 export async function getStoryboard(id: string) {
-  // Obtener el storyboard con sus relaciones
-  const { data: storyboard, error: storyboardError } = await supabase
-    .from('storyboards')
-    .select(`
-      *,
-      client:client_id (name),
-      creator:creator_id (name)
-    `)
-    .eq('id', id)
-    .single();
-  
-  if (storyboardError) throw storyboardError;
-  
-  // Obtener el contenido AI relacionado
-  const { data: aiContentRaw, error: aiContentError } = await supabase
-    .from('storyboard_ai_content')
-    .select('*')
-    .eq('storyboard_id', id)
-    .single();
-  
-  if (aiContentError && aiContentError.code !== 'PGRST116') {
-    // PGRST116 es "No se encontraron registros", lo que está bien si no hay contenido AI
-    throw aiContentError;
+  try {
+    // Obtener el storyboard con sus relaciones
+    const { data: storyboard, error: storyboardError } = await supabase
+      .from('storyboards')
+      .select(`
+        *,
+        client:client_id (name),
+        creator:creator_id (name)
+      `)
+      .eq('id', id)
+      .single();
+    
+    if (storyboardError) throw storyboardError;
+    
+    // Obtener el contenido AI relacionado con select explícito
+    // El error 406 podría estar relacionado con intentar obtener todos los campos con '*'
+    const { data: aiContentRaw, error: aiContentError } = await supabase
+      .from('storyboard_ai_content')
+      .select(`
+        id, 
+        storyboard_id, 
+        objective, 
+        tone, 
+        value_prop1, 
+        value_prop2, 
+        hook, 
+        description, 
+        cta, 
+        scene1_script, 
+        scene1_visual, 
+        scene1_sound, 
+        scene2_script, 
+        scene2_visual, 
+        scene2_sound, 
+        scene3_script, 
+        scene3_visual, 
+        scene3_sound, 
+        scene4_script, 
+        scene4_visual, 
+        scene4_sound
+      `)
+      .eq('storyboard_id', id)
+      .maybeSingle();  // Usa maybeSingle en lugar de single para evitar errores si no hay registro
+    
+    // Solo mostrar errores reales, no si simplemente no encuentra el registro
+    if (aiContentError && aiContentError.code !== 'PGRST116') {
+      console.error("Error al obtener AI content:", aiContentError);
+    }
+    
+    // Convertir snake_case a camelCase para el frontend
+    const aiContent = aiContentRaw ? convertObjectKeysToCamelCase(aiContentRaw) : undefined;
+    
+    console.log("Storyboard y AI content cargados correctamente");
+    
+    return {
+      ...storyboard,
+      ai_content: aiContent
+    };
+  } catch (error) {
+    console.error("Error completo en getStoryboard:", error);
+    throw error;
   }
-  
-  // Convertir snake_case a camelCase para el frontend
-  const aiContent = aiContentRaw ? convertObjectKeysToCamelCase(aiContentRaw) : undefined;
-  
-  return {
-    ...storyboard,
-    ai_content: aiContent
-  } as StoryboardWithRelations;
 }
 
 export async function createStoryboard(storyboard: Storyboard, aiContent?: AIContent) {
