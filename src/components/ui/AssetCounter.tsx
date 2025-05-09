@@ -35,7 +35,7 @@ export const AssetCounter: React.FC<AssetCounterProps> = ({ assets, className = 
         });
         assetTypes = parsed;
       }
-    } catch (error) {
+    } catch (_) {
       // Si no es un JSON, verificamos si es "Disponible"
       if (assets === 'Disponible' || assets.toLowerCase() === 'disponible') {
         count = 1;
