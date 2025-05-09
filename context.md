@@ -1,91 +1,197 @@
-# 🪄 Winclap Storyboard Generator Platform
+# 🪄 Winclap Storyboard Generator
 
-Una herramienta interna para que los Content Partner Analysts generen storyboards completos para creadores y clientes de forma asistida por IA y automatización vía Google Slides API.
+## 📌 Descripción General
 
-## 🎯 Project Context
+Winclap Storyboard Generator es una herramienta interna tipo SaaS desarrollada para Content Partner Analysts que permite generar storyboards profesionales para creadores y clientes. La plataforma utiliza IA (Claude de Anthropic) para asistir en la creación de contenido y automatiza el proceso de generación de presentaciones a través de la API de Google Slides.
 
-La plataforma surge de la necesidad de acelerar y profesionalizar el armado de storyboards creativos que hoy se construyen manualmente a partir de briefings internos, momentos de inspiración (MOM), y referencias visuales. Actualmente, todo ese input es transformado en un deck de Slides que sigue un template fijo.
+## 🎯 Objetivo del Proyecto
 
-El objetivo es automatizar ese proceso, generando propuestas creativas en base a inputs flexibles con ayuda de IA, revisarlas con control humano, y poblar directamente los campos del storyboard en Google Slides.
+La plataforma surge de la necesidad de acelerar y profesionalizar el armado de storyboards creativos que anteriormente se construían manualmente. El proceso original requería transformar briefings, momentos de inspiración (MOM) y referencias visuales en decks de Google Slides siguiendo un template fijo.
 
-## 👥 User Flow Overview (Actualizado)
+El objetivo es automatizar este proceso, permitiendo que los analistas generen propuestas creativas basadas en inputs flexibles con ayuda de IA, revisen con control humano, y publiquen directamente en Google Slides.
 
-1. **Login**: Autenticación con NextAuth (Google OAuth)
-2. **Navegación del dashboard**: Acceso a clientes, storyboards y al editor
-3. **Editor de briefing libre**: El analista escribe o pega contenido no estructurado en un editor Tiptap mejorado
-4. **Reorganización con IA**: Botón que procesa el texto libre y lo estructura según el formato necesario
-5. **Edición manual**: El contenido reestructurado es totalmente editable en el editor
-6. **Generación de Slides**: Al confirmar, se envía el contenido a /api/generate-slides
-7. **Visualización del resultado**: Se muestra el link editable a Google Slides
-8. **Gestión de clientes y storyboards**: Interfaces tabulares para administrar todos los recursos
-
-## 💡 Core Features
-
-### 1. Editor de Texto Avanzado
-- **Basado en Tiptap**: Editor tipo Notion con capacidades avanzadas
-- **Entrada libre**: Acepta cualquier formato de texto
-- **Slash Commands**: Acceso rápido a headings, listas, templates específicos
-- **Floating Toolbar**: Opciones de formato al seleccionar texto (Bold, Italic, Link, etc.)
-- **Markdown Shortcuts**: #, ##, -, >, para formateo rápido
-- **Templates personalizados**: Cliente, Objetivo, Target, Hook via comandos
-- **Fully editable**: Todo el contenido es editable, incluyendo el generado por IA
-
-### 2. IA Processing
-- **Reorganización inteligente**: Convierte texto libre a formato estructurado
-- **API /api/reorganize-content**: Nueva endpoint que procesa con Claude
-- **Generación de contenido**: Mantiene la capacidad de generar storyboards completos
-- **Validación de campos**: Verifica campos requeridos antes de generar slides
-
-### 3. UI/UX Mejorado
-- **Layout tipo Notion**: Interfaz limpia y minimalista centrada en el contenido
-- **Sidebar mejorada**: Navegación intuitiva entre diferentes secciones
-- **Topbar estilo Notion**: Título editable, selección de cliente y fase
-- **Botones flotantes**: Acciones principales siempre accesibles
-- **Responsive design**: Adaptado para diferentes tamaños de pantalla
-- **Dark mode ready**: Variables CSS preparadas para tema oscuro
-
-### 4. Gestión de Clientes y Storyboards
-- **Tablas interactivas**: Visualización y administración de datos en tablas
-- **Filtros y búsqueda**: Capacidad de encontrar rápidamente la información
-- **Ordenación**: Posibilidad de ordenar por diferentes campos
-- **Acciones contextuales**: Menús de acciones para cada elemento
-
-### 5. Slides Generator
-- Duplica template fijo de Google Slides
-- Extrae automáticamente información como cliente
-- Reemplaza placeholders dinámicamente
-- Valida campos requeridos antes de generar
-- Manejo inteligente de errores y reintentos
-
-## ⚙️ Technical Stack
+## 💻 Stack Tecnológico
 
 ### Frontend
-- Next.js 15 (App Router)
-- Tailwind CSS + shadcn/ui
-- Tiptap + extensiones (BubbleMenu, Commands, Typography, Link, TextAlign)
-- React Hook Form + Zod
-- Tippy.js para tooltips y menús
-- Lucide React para iconos
+- **Next.js 15** (usando App Router)
+- **React 19**
+- **TypeScript**
+- **Tailwind CSS + shadcn/ui** para la interfaz de usuario
+- **Tiptap** para el editor de texto avanzado (con extensiones)
+- **React Hook Form + Zod** para validación de formularios
+- **Framer Motion** para animaciones
+- **Lucide React** para iconografía
 
 ### Backend
-- Node.js
-- Anthropic API (Claude)
-- Google Slides + Drive API
+- **Node.js**
+- **Anthropic API** (Claude 3 Opus) para generación de contenido
+- **Google Slides + Drive API** para la creación de presentaciones
+- **NextAuth** para autenticación con Google OAuth
 
 ### Infraestructura
-- Vercel (hosting)
-- Next.js API routes
+- **Vercel** para hosting
+- **Next.js API Routes** para endpoints
 
-## 📁 Repository Structure (Actualizada)
+## 🔑 Características Principales
+
+### 1. Editor Tipo Notion
+- Editor de texto avanzado basado en Tiptap
+- Interfaz minimalista centrada en el contenido
+- Slash commands para acceso rápido a headings, listas, templates
+- Floating toolbar para formato de texto
+- Markdown shortcuts
+- Soporte para templates personalizados
+
+### 2. Procesamiento con IA
+- Reorganización inteligente de texto libre a formato estructurado
+- Generación de contenido de storyboard completo
+- Validación automática de campos requeridos
+
+### 3. Integración con Google Slides
+- Duplicación de template desde Google Slides
+- Reemplazo automático de placeholders
+- Validación de campos requeridos antes de generar
+- Manejo de errores y reintentos
+
+### 4. Gestión de Datos
+- Dashboard para visualizar clientes y storyboards
+- Tablas interactivas con filtrado y búsqueda
+- Ordenación por diferentes campos
+- Acciones contextuales para cada elemento
+
+### 5. Diseño UX/UI Mejorado
+- Layout tipo Notion con sidebar mejorada
+- Topbar con breadcrumbs y acciones rápidas
+- Botones flotantes para acciones principales
+- Responsive design
+- Dark mode ready
+
+## 👥 Flujo de Usuario
+
+1. **Login**: Autenticación con Google OAuth (NextAuth)
+2. **Dashboard**: Acceso a clientes, storyboards y editor
+3. **Editor de Briefing**: El analista escribe o pega contenido en formato libre
+4. **Reorganización con IA**: Procesamiento del texto para estructurarlo según formato de storyboard
+5. **Edición Manual**: Revisión y edición del contenido reorganizado
+6. **Generación de Slides**: Creación automática en Google Slides
+7. **Visualización del Resultado**: Acceso al documento editable
+8. **Gestión**: Administración de clientes y storyboards existentes
+
+## 📝 Estructura de Datos del Storyboard
+
+El storyboard se estructura con los siguientes campos principales:
+
+- **Información General**: Objetivo, tono, propuestas de valor
+- **Moodboard**: Locaciones, iluminación, elementos principales, estética
+- **Idea y Campaña**: Nombre de la idea, hook, descripción, CTA
+- **Escenas** (4): Script, elementos visuales, sonido, encuadre para cada escena
+
+## 🔄 Flujo de Procesamiento con IA
+
+1. **Entrada**: Texto libre con información sobre el brief, cliente, objetivo, etc.
+2. **Procesamiento con Claude**: Análisis y extracción de información relevante
+3. **Estructuración**: Organización en formato de storyboard (JSON)
+4. **Visualización**: Presentación en editor para revisión
+5. **Generación**: Creación del documento de Google Slides con contenido
+
+## 🔐 Seguridad y Autenticación
+
+- Autenticación mediante Google OAuth 2.0
+- Scopes específicos para acceso a Drive y Presentations
+- Middleware para protección de rutas
+- Manejo de tokens y refresh tokens
+
+## 📱 Diseño Responsive
+
+- Layout adaptable a diferentes tamaños de pantalla
+- Sidebar colapsable en dispositivos móviles
+- Controles de UI adaptados para diferentes dispositivos
+
+## 🚀 Mejoras Recientes
+
+- **Eliminación del formulario estructurado**: Reemplazado por editor de texto libre
+- **Nueva página /editor**: Entrada principal simplificada
+- **Floating toolbar**: Opciones de formato al seleccionar texto
+- **Slash commands**: Acceso rápido a templates y elementos
+- **Reorganización con IA**: Mejora en el procesamiento de texto libre
+- **UX mejorado**: Layout y controles optimizados
+- **Tablas de datos**: Interfaz mejorada para gestión
+
+## 🔮 Consideraciones Futuras
+
+- Drag handles para bloques
+- Colores de fondo por sección
+- Historial de versiones
+- Templates precargados
+- Persistencia de borradores
+- Colaboración en tiempo real
+- Estadísticas de uso por cliente
+- Integración con otras plataformas de Winclap
+
+## 📚 Prompt de IA para Reorganización
 
 ```
+Analiza este texto y ordénalo según la estructura de storyboard.
+Identifica y estructura:
+- Cliente y objetivo
+- Target audience  
+- Hook principal
+- Desarrollo de escenas
+- CTA
+
+Mantén un formato markdown legible para un editor de texto.
+```
+
+## 🏗️ Estructura de Directorios
+
+- **/src/app**: Rutas y páginas de la aplicación (App Router)
+  - **/api**: Endpoints de API
+  - **/dashboard**: Páginas y rutas protegidas
+- **/src/components**: Componentes React
+  - **/editor**: Editor de texto y componentes relacionados
+  - **/sidebar**: Navegación lateral
+  - **/topbar**: Barra superior
+  - **/ui**: Componentes de UI (shadcn)
+- **/src/lib**: Utilidades y servicios
+  - **anthropicService.ts**: Integración con Claude
+  - **googleApi.ts**: Integración con Google Slides/Drive
+- **/src/types**: Definiciones de TypeScript
+
+## ⚙️ Instrucciones para Desarrollo
+
+```bash
+# Instalar dependencias
+npm install
+
+# Ejecutar en modo desarrollo
+npm run dev
+
+# Construir para producción
+npm run build
+
+# Iniciar servidor de producción
+npm start
+```
+
+## 🔐 Variables de Entorno Requeridas
+
+- `GOOGLE_CLIENT_ID` - ID de cliente OAuth de Google
+- `GOOGLE_CLIENT_SECRET` - Secret de cliente OAuth de Google
+- `ANTHROPIC_API_KEY` - Clave API de Anthropic para Claude
+- `TEMPLATE_ID` - ID del template de Google Slides a utilizar
+- `NEXTAUTH_SECRET` - Secret para NextAuth
+- `NEXTAUTH_URL` - URL base para NextAuth
+
+
 bautistaroberts@Bautistas-MacBook-Pro winclap-storyboard-generator % tree -I "node_modules|.next|.git|public|.vscode|.DS_Store" -L 3
 .
 ├── commands.md
 ├── components.json
 ├── context.md
 ├── credentials.json
+├── DEV.md
 ├── eslint.config.mjs
+├── last-task.md
 ├── next-env.d.ts
 ├── next.config.ts
 ├── package-lock.json
@@ -111,7 +217,6 @@ bautistaroberts@Bautistas-MacBook-Pro winclap-storyboard-generator % tree -I "no
 │   │   ├── LoadingState.tsx
 │   │   ├── navbar.tsx
 │   │   ├── sidebar
-│   │   ├── SupabaseTest.tsx
 │   │   ├── topbar
 │   │   └── ui
 │   ├── hooks
@@ -121,6 +226,7 @@ bautistaroberts@Bautistas-MacBook-Pro winclap-storyboard-generator % tree -I "no
 │   │   ├── constants.ts
 │   │   ├── googleApi.ts
 │   │   ├── supabase.ts
+│   │   ├── supabaseServer.ts
 │   │   └── utils.ts
 │   ├── middleware.ts
 │   ├── services
@@ -134,63 +240,5 @@ bautistaroberts@Bautistas-MacBook-Pro winclap-storyboard-generator % tree -I "no
 ├── tailwind.config.js
 └── tsconfig.json
 
-16 directories, 37 files
+16 directories, 39 files
 bautistaroberts@Bautistas-MacBook-Pro winclap-storyboard-generator % 
-```
-
-## 📦 Prompt IA Actualizado
-
-### Nuevo prompt para reorganización:
-```
-Analiza este texto y ordénalo según la estructura de storyboard.
-Identifica y estructura:
-- Cliente y objetivo
-- Target audience  
-- Hook principal
-- Desarrollo de escenas
-- CTA
-
-Mantén un formato markdown legible para un editor de texto.
-```
-
-## 🧪 MVP Scope
-
-- [x] Autenticación Google OAuth
-- [x] Editor de texto libre tipo Notion
-- [x] Slash commands con templates
-- [x] Floating toolbar para formato
-- [x] Reorganización de texto con IA
-- [x] Edición completa del contenido
-- [x] Generación de Google Slides
-- [x] Validación de campos requeridos
-- [x] UI/UX optimizado para productividad
-- [x] Sidebar mejorada para navegación
-- [x] Gestión de clientes
-- [x] Listado de storyboards
-
-## 🔄 Recent Changes
-
-1. **Eliminación del formulario estructurado**: Reemplazado por editor de texto libre
-2. **Nueva página /editor**: Entrada principal simplificada
-3. **Floating toolbar**: Opciones de formato al seleccionar
-4. **Slash commands**: Acceso rápido a elementos comunes
-5. **Reorganización con IA**: Procesa texto libre a estructura
-6. **Validación dinámica**: Extrae cliente y valida campos automáticamente
-7. **UX mejorado**: Layout full-width y controles accesibles
-8. **Sidebar renovada**: Navegación lateral para todas las secciones
-9. **Editor tipo Notion**: Interfaz minimalista centrada en el contenido
-10. **Topbar estilo Notion**: Título editable y selección de propiedades
-11. **Botones flotantes**: Reemplazo de la barra inferior fija
-12. **Tablas de datos**: Gestión de clientes y storyboards
-
-## 🚀 Future Considerations
-
-- Drag handles para bloques
-- Colores de fondo por sección
-- Historial de versiones
-- Templates precargados
-- Persistencia de borradores
-- Colaboración en tiempo real
-- Estadísticas de uso por cliente
-- Integración con otras plataformas de Winclap
-
